@@ -62,16 +62,22 @@ const MyCookBook = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [recipeToShare, setRecipeToShare] = useState<Recipe | null>(null);
 
   // Load recipes and set page context on mount
   const { updateContext } = useFreddieContext();
   const { refreshXP } = useLevelProgressContext();
+  
+  // Categories for filtering
+  const categories = ['All', 'Seafood', 'Meat', 'Vegetarian', 'Dessert'];
 
   const handleShare = async (platform: string = 'native') => {
     const shareData = {
-      title: 'My Cookbook on Porkchop',
-      text: 'Check out my digital cookbook on Porkchop! I\'ve been collecting amazing recipes and would love to share them with you.',
-      url: window.location.href,
+      title: recipeToShare ? `${recipeToShare.name} Recipe on Porkchop` : 'My Cookbook on Porkchop',
+      text: recipeToShare 
+        ? `Check out this amazing recipe for ${recipeToShare.name} on Porkchop!` 
+        : 'Check out my digital cookbook on Porkchop! I\'ve been collecting amazing recipes and would love to share them with you.',
+      url: window.location.href + (recipeToShare ? `?recipe=${encodeURIComponent(recipeToShare.id)}` : ''),
     };
 
     try {
@@ -191,32 +197,43 @@ const MyCookBook = () => {
     if (activeCategory === 'All') return matchesSearch;
     
     // Simple category detection based on ingredients
-    // You can enhance this with more sophisticated categorization
-    const hasSeafood = recipe.ingredients?.some(i => 
-      ['fish', 'salmon', 'tuna', 'shrimp', 'lobster', 'crab', 'seafood'].some(term => 
-        i.toLowerCase().includes(term)
-      )
-    );
+    const ingredients = recipe.ingredients || [];
+    const ingredientsJoined = ingredients.join(' ').toLowerCase();
     
-    const hasMeat = recipe.ingredients?.some(i => 
-      ['beef', 'chicken', 'pork', 'lamb', 'meat', 'steak', 'turkey'].some(term => 
-        i.toLowerCase().includes(term)
-      )
-    );
+    const hasSeafood = ingredientsJoined.includes('fish') || 
+      ingredientsJoined.includes('salmon') || 
+      ingredientsJoined.includes('tuna') || 
+      ingredientsJoined.includes('cod') || 
+      ingredientsJoined.includes('tilapia') || 
+      ingredientsJoined.includes('shrimp') || 
+      ingredientsJoined.includes('lobster') || 
+      ingredientsJoined.includes('crab') || 
+      ingredientsJoined.includes('oyster') || 
+      ingredientsJoined.includes('clam') || 
+      ingredientsJoined.includes('mussel');
     
-    const hasVegetable = recipe.ingredients?.some(i => 
-      ['vegetable', 'carrot', 'broccoli', 'spinach', 'kale', 'lettuce', 'vegan', 'vegetarian'].some(term => 
-        i.toLowerCase().includes(term)
-      )
-    );
+    const hasMeat = ingredientsJoined.includes('beef') || 
+      ingredientsJoined.includes('chicken') || 
+      ingredientsJoined.includes('pork') || 
+      ingredientsJoined.includes('turkey') || 
+      ingredientsJoined.includes('bacon') || 
+      ingredientsJoined.includes('sausage') || 
+      ingredientsJoined.includes('lamb');
     
-    const hasDessert = recipe.ingredients?.some(i => 
-      ['sugar', 'chocolate', 'dessert', 'cake', 'cookie', 'sweet', 'pie', 'ice cream'].some(term => 
-        i.toLowerCase().includes(term)
-      )
-    );
+    const hasVegetable = ingredientsJoined.includes('vegetable') || 
+      ingredientsJoined.includes('tomato') || 
+      ingredientsJoined.includes('carrot') || 
+      ingredientsJoined.includes('spinach');
     
-    switch(activeCategory) {
+    const hasDessert = ingredientsJoined.includes('sugar') || 
+      ingredientsJoined.includes('chocolate') || 
+      ingredientsJoined.includes('vanilla') || 
+      ingredientsJoined.includes('cream') || 
+      ingredientsJoined.includes('cake') || 
+      ingredientsJoined.includes('cookie') || 
+      ingredientsJoined.includes('pie');
+    
+    switch (activeCategory) {
       case 'Seafood': return hasSeafood && matchesSearch;
       case 'Meat': return hasMeat && matchesSearch;
       case 'Vegetarian': return hasVegetable && !hasMeat && !hasSeafood && matchesSearch;
@@ -232,10 +249,9 @@ const MyCookBook = () => {
   const totalPages = Math.ceil(filteredRecipes.length / recipesPerPage);
 
   // Change page
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  // Categories for filtering
-  const categories = ['All', 'Seafood', 'Meat', 'Vegetarian', 'Dessert'];
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   if (loading) {
     return (
@@ -248,128 +264,130 @@ const MyCookBook = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto mt-8 bg-weatheredWhite p-6 rounded shadow">
+        <div className="flex flex-col items-center justify-center min-h-[200px]">
+          <div className="text-xl text-red-600 mb-4">⚠️</div>
+          <div className="text-lg font-retro mb-2">{error}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto mt-8 bg-weatheredWhite p-6 rounded shadow">
+      {/* My Cook Book header with emoji */}
+      <div className="flex items-center justify-center mb-6">
+        <span className="text-5xl mr-2">📖</span>
+        <h1 className="text-3xl font-retro text-maineBlue mb-0">My Cook Book</h1>
+      </div>
       {/* Chef of the Day Quote */}
       <div className="mb-6 p-4 border-l-4 border-seafoam rounded flex items-center">
         <div className="mr-4 text-3xl" role="img" aria-label="chef-hat">👨‍🍳</div>
         <div>
-          <div className="italic text-lg mb-1">"{getChefQuoteOfTheDay().quote}"</div>
-          <div className="font-retro text-seafoam font-bold text-right">— {getChefQuoteOfTheDay().chef}</div>
+          {/* Store quote in variable to avoid duplicate function calls */}
+          {(() => {
+            const quoteOfDay = getChefQuoteOfTheDay();
+            return (
+              <>
+                <div className="italic text-lg mb-1">"{quoteOfDay.quote}"</div>
+                <div className="font-retro text-seafoam font-bold text-right">— {quoteOfDay.chef}</div>
+              </>
+            );
+          })()}
         </div>
       </div>
-
-      {/* Digital Cookbook Header with Search and Filters */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-retro">My Digital Cookbook</h2>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowShareModal(true);
-              }}
-              className="text-maineBlue hover:text-seafoam transition-colors"
-              title="Share Cookbook"
+      {showShareModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+        setShowShareModal(false);
+        setRecipeToShare(null);
+      }}>
+        <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+          <h3 className="text-lg font-bold mb-4">
+            {recipeToShare ? `Share "${recipeToShare.name}" Recipe` : 'Share Your Cookbook'}
+          </h3>
+          <div className="flex justify-around mb-4">
+            <button 
+              onClick={() => handleShare('facebook')}
+              className="p-2 rounded-full hover:bg-blue-100"
+              title="Share on Facebook"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#1877F2"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
             </button>
-
-            {showShareModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
-                <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-                  <h3 className="text-lg font-bold mb-4">Share Your Cookbook</h3>
-                  <div className="flex justify-around mb-4">
-                    <button 
-                      onClick={() => handleShare('facebook')}
-                      className="p-2 rounded-full hover:bg-blue-100"
-                      title="Share on Facebook"
-                    >
-                      <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={() => handleShare('twitter')}
-                      className="p-2 rounded-full hover:bg-blue-100"
-                      title="Share on Twitter"
-                    >
-                      <svg className="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={() => handleShare('pinterest')}
-                      className="p-2 rounded-full hover:bg-red-100"
-                      title="Share on Pinterest"
-                    >
-                      <svg className="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={() => handleShare('whatsapp')}
-                      className="p-2 rounded-full hover:bg-green-100"
-                      title="Share on WhatsApp"
-                    >
-                      <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.966-.273-.099-.471-.148-.67.15-.197.297-.767.963-.94 1.16-.173.199-.347.222-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.795-1.484-1.784-1.66-2.087-.173-.297-.018-.458.13-.606.136-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.508-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.078 4.488.703.306 1.25.489 1.675.625.712.227 1.36.195 1.871.118.571-.086 1.757-.718 2.005-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.345m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.885 9.888-9.885 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.549 4.142 1.595 5.945L0 24l6.335-1.652a11.882 11.882 0 005.723 1.465h.006c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={() => handleShare('instagram')}
-                      className="p-2 rounded-full hover:bg-pink-100"
-                      title="Share on Instagram"
-                    >
-                      <svg className="w-8 h-8 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={() => handleShare('slack')}
-                      className="p-2 rounded-full hover:bg-purple-100"
-                      title="Share on Slack"
-                    >
-                      <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.104-2.521a2.528 2.528 0 0 1 5.046 0 2.528 2.528 0 0 1-2.526 2.52h-2.52v-2.52zm-1.271 0a2.528 2.528 0 0 1-2.522-2.52 2.528 2.528 0 0 1 2.522-2.522 2.528 2.528 0 0 1 2.526 2.522v6.313a2.528 2.528 0 0 1-2.526 2.521 2.527 2.527 0 0 1-2.522-2.521V3.792zm-2.522 13.894a2.527 2.527 0 0 1 2.522-2.521 2.527 2.527 0 0 1 2.521 2.521v2.522h-2.521a2.528 2.528 0 0 1-2.522-2.522z"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex justify-between">
-                    <button
-                      onClick={() => handleShare('native')}
-                      className="px-4 py-2 bg-seafoam text-maineBlue rounded hover:bg-maineBlue hover:text-seafoam transition-colors"
-                    >
-                      Share via...
-                    </button>
-                    <button
-                      onClick={() => setShowShareModal(false)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            <button 
+              onClick={() => handleShare('twitter')}
+              className="p-2 rounded-full hover:bg-blue-100"
+              title="Share on Twitter"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#1DA1F2"><path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg>
+            </button>
+            <button 
+              onClick={() => handleShare('pinterest')}
+              className="p-2 rounded-full hover:bg-red-100"
+              title="Share on Pinterest"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#E60023"><path d="M9.04 21.54c.96.29 1.93.46 2.96.46a10 10 0 0 0 10-10A10 10 0 0 0 12 2 10 10 0 0 0 2 12c0 4.25 2.67 7.9 6.44 9.34-.09-.78-.18-2.07 0-2.96l1.15-4.94s-.29-.58-.29-1.5c0-1.38.86-2.41 1.84-2.41.86 0 1.26.63 1.26 1.44 0 .86-.57 2.09-.86 3.27-.17.98.52 1.84 1.52 1.84 1.78 0 3.16-1.9 3.16-4.58 0-2.4-1.72-4.04-4.19-4.04-2.82 0-4.48 2.1-4.48 4.31 0 .86.28 1.73.74 2.3.09.06.09.14.06.29l-.29 1.09c0 .17-.11.23-.28.11-1.28-.56-2.02-2.38-2.02-3.85 0-3.16 2.24-6.03 6.56-6.03 3.44 0 6.12 2.47 6.12 5.75 0 3.44-2.13 6.2-5.18 6.2-.97 0-1.92-.52-2.26-1.13l-.67 2.37c-.23.86-.86 2.01-1.29 2.7v-.03z"/></svg>
+            </button>
+            <button 
+              onClick={() => handleShare('whatsapp')}
+              className="p-2 rounded-full hover:bg-green-100"
+              title="Share on WhatsApp"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#25D366"><path d="M17.498 14.382c-.301-.15-1.767-.867-2.04-.966-.273-.101-.473-.15-.673.15-.197.295-.771.964-.944 1.162-.175.195-.349.21-.646.075-.3-.15-1.263-.465-2.403-1.485-.888-.795-1.484-1.77-1.66-2.07-.174-.3-.019-.465.13-.615.136-.135.301-.345.451-.523.146-.181.194-.301.297-.496.1-.21.049-.375-.025-.524-.075-.15-.672-1.62-.922-2.206-.24-.584-.487-.51-.672-.51-.172-.015-.371-.015-.571-.015-.2 0-.523.074-.797.359-.273.3-1.045 1.02-1.045 2.475s1.07 2.865 1.219 3.075c.149.195 2.105 3.195 5.1 4.485.714.3 1.27.48 1.704.629.714.227 1.365.195 1.88.121.574-.091 1.767-.721 2.016-1.426.255-.705.255-1.29.18-1.425-.074-.135-.27-.21-.57-.345m-5.446 7.443h-.016c-1.77 0-3.524-.48-5.055-1.38l-.36-.214-3.75.975 1.005-3.645-.239-.375c-.99-1.576-1.516-3.391-1.516-5.26 0-5.445 4.455-9.885 9.942-9.885 2.654 0 5.145 1.035 7.021 2.91 1.875 1.859 2.909 4.35 2.909 6.99-.004 5.444-4.46 9.885-9.935 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.334.101 11.893c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652c1.746.943 3.71 1.444 5.71 1.447h.006c6.585 0 11.946-5.336 11.949-11.896 0-3.176-1.24-6.165-3.495-8.411"/></svg>
+            </button>
+            <button 
+              onClick={() => handleShare('instagram')}
+              className="p-2 rounded-full hover:bg-pink-100"
+              title="Share on Instagram"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </button>
+            <button 
+              onClick={() => handleShare('slack')}
+              className="p-2 rounded-full hover:bg-purple-100"
+              title="Share on Slack"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#4A154B"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+            </button>
           </div>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search recipes..."
-              className="pl-8 pr-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-seafoam"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
+          <div className="flex justify-between">
+            <button
+              onClick={() => handleShare('native')}
+              className="px-4 py-2 bg-seafoam text-maineBlue rounded hover:bg-maineBlue hover:text-seafoam transition-colors"
+            >
+              Share via...
+            </button>
+            <button
+              onClick={() => {
+                setShowShareModal(false);
+                setRecipeToShare(null);
               }}
-            />
-            <div className="absolute left-2 top-2.5 text-gray-400">🔍</div>
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+            >
+              Close
+            </button>
           </div>
         </div>
-        
+      </div>
+      )}
+      
+      {/* Search and Filters */}
+      <div className="mb-6">
+        <div className="relative mb-4">
+          <input
+            type="text"
+            placeholder="Search recipes..."
+            className="pl-8 pr-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-seafoam w-full"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reset to first page on search
+            }}
+          />
+          <div className="absolute left-2 top-2.5 text-gray-400">🔍</div>
+        </div>
+      
         {/* Category Filters */}
         <div className="flex flex-wrap gap-2 mb-4">
           {categories.map(category => (
@@ -390,7 +408,6 @@ const MyCookBook = () => {
           ))}
         </div>
       </div>
-
       {/* Recipe Count */}
       <div className="text-sm text-gray-500 mb-4">
         {filteredRecipes.length === 0 
@@ -494,6 +511,15 @@ const MyCookBook = () => {
                     className="bg-seafoam text-maineBlue px-4 py-2 rounded hover:bg-maineBlue hover:text-seafoam transition-colors"
                   >
                     Cook This
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRecipeToShare(recipe);
+                      setShowShareModal(true);
+                    }}
+                    className="bg-maineBlue text-seafoam px-4 py-2 rounded hover:bg-seafoam hover:text-maineBlue transition-colors"
+                  >
+                    Share
                   </button>
                 </div>
               </div>

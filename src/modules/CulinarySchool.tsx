@@ -170,8 +170,11 @@ const CulinarySchool = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 pt-8 pb-8 bg-sand min-h-screen">
 
-        <div className="max-w-2xl mx-auto bg-white rounded shadow p-6">
-        <h2 className="text-xl font-retro mb-4">Culinary School</h2>
+        <div className="max-w-4xl mx-auto mt-8">
+      <div className="flex items-center justify-center mb-2">
+        <span className="text-5xl mr-2">🍳</span>
+        <h1 className="text-3xl font-retro text-maineBlue mb-0">Culinary School</h1>
+      </div>
         {/* Always render a VideoModal for the currently displayed tutorial list */}
         {(isRecipeSelected ? tutorials : defaultTutorials).map((tut, idx) => (
           <VideoModal

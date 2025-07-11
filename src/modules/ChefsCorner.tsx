@@ -68,7 +68,10 @@ const ChefsCorner = () => {
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <header className="chefs-corner-header mb-6 flex flex-col items-center">
-            <h1 className="text-3xl font-retro text-maineBlue mb-2">Chefs Corner</h1>
+            <div className="flex items-center justify-center mb-1">
+              <span className="text-5xl mr-2">🦐</span>
+              <h1 className="text-3xl font-retro text-maineBlue mb-0">Chefs Corner</h1>
+            </div>
             <p className="text-lg text-gray-700 mb-4 text-center">Shop the freshest ingredients, meal kits, and more—all with a Maine Fish Market flair.</p>
           </header>
           {/* Shopping List - now at the top */}
