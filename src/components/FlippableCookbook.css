@@ -1,0 +1,1189 @@
+.cookbook-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  width: 900px;
+  max-width: 100%;
+  height: 750px;
+  max-height: 98vh;
+  perspective: 1500px;
+  overflow: visible;
+  outline: none;
+  z-index: 10;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(233, 78, 60, 0.1);
+  transform-origin: center center;
+  transition: transform 0.3s ease;
+  transform: scale(1);
+}
+
+.cookbook-container.cover-only {
+  max-width: 900px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3/2;
+}
+
+/* Remove all focus outlines */
+.cookbook-container:focus,
+.cookbook-container:active,
+.cookbook-container *:focus,
+.cookbook-container *:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Page Number */
+.page-number {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
+  background-color: #f5f5f5;
+  padding: 5px 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.cookbook-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+.page-arrow {
+  font-size: 1rem;
+  color: #e94e3c;
+  cursor: pointer;
+}
+
+.left-arrow {
+  margin-right: 5px;
+}
+
+.right-arrow {
+  margin-left: 5px;
+}
+
+/* Spiral Binding */
+.spiral-binding {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  z-index: 1000;
+  background: #8B4513; /* Brown spine background */
+}
+
+.spiral-hole {
+  width: 8px;
+  height: 8px;
+  background: #222;
+  border-radius: 50%;
+  margin: 5px auto;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.8), 0 0 1px rgba(255,255,255,0.4);
+  position: relative;
+  z-index: 1002;
+}
+
+.cookbook-spine {
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #8B4513;
+  z-index: 2;
+}
+
+.cover-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #e94e3c;
+  padding: 40px 30px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  border-radius: 5px 15px 15px 5px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transform-origin: left center;
+  transform: rotateY(0deg);
+  transition: transform 0.5s;
+  backface-visibility: hidden;
+  box-sizing: border-box;
+}
+
+.page-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: transform 1s ease-in-out;
+  transform-origin: left center;
+  box-sizing: border-box;
+  left: 0;
+  top: 0;
+}
+
+.book-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+  padding: 40px 30px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  box-sizing: border-box;
+}
+
+.left-page {
+  border-right: 1px solid #ddd;
+}
+
+.right-page {
+  border-left: 1px solid #ddd;
+}
+
+.page h2 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #e94e3c;
+}
+
+.page-title {
+  font-family: 'Bree Serif', serif;
+  text-align: center;
+  margin: 0 0 15px 0;
+  padding: 15px 0 10px 0;
+  color: #333;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #f5f5f5;
+  width: 100%;
+  position: relative;
+}
+
+/* Navigation zones */
+.nav-zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  cursor: pointer;
+  z-index: 100;
+}
+
+.left-zone {
+  left: 0;
+}
+
+.right-zone {
+  right: 0;
+}
+
+/* Turned pages that stick */
+.turned-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9000;
+  transform-origin: left center;
+  transform: rotateY(-180deg);
+  overflow: visible;
+}
+
+.turned-page {
+  transform-style: preserve-3d;
+}
+
+.turned-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+.turned-page.cover-turned-page::after {
+  background: #e94e3c;
+}
+
+.turned-page .page-content {
+  backface-visibility: hidden;
+}
+
+.cover-turned-page {
+  z-index: 8000; /* Ensure cover is visible but behind other turned pages */
+}
+
+.cover-content {
+  background: #e94e3c; /* Match the cover background color */
+  color: #fff;
+}
+
+.page-content.page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+  overflow: auto;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 40px 60px;
+  box-sizing: border-box;
+  backface-visibility: hidden;
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+  text-align: center;
+}
+
+/* Ensure content fits within the page */
+.page-content.page p,
+.page-content.page h1,
+.page-content.page h2,
+.page-content.page h3,
+.page-content.page ul,
+.page-content.page ol {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Responsive text sizing */
+.page-content.page {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.page-content.page h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-content.page h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.page-content.page p {
+  margin-bottom: 1rem;
+}
+
+/* Page Turn Animation */
+.page-turn-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+  perspective: 1500px;
+  transform-style: preserve-3d;
+  overflow: visible;
+}
+
+/* Reverse animation when going backward */
+.page-turn-animation.reverse .turning-page {
+  animation: pageTurnReverse 0.5s ease-in-out forwards;
+}
+
+.turning-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 900px;
+  height: 600px;
+  background: #f5f5f5;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transform-origin: left center;
+  animation: pageTurn 0.5s ease-in-out forwards;
+  padding: 40px 30px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  z-index: 9999;
+}
+
+.turning-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+@keyframes pageTurn {
+  0% { 
+    transform: rotateY(0deg);
+    z-index: 9999;
+  }
+  30% {
+    transform: rotateY(-60deg);
+    z-index: 9999;
+  }
+  49% {
+    z-index: 9999;
+  }
+  50% {
+    z-index: 9999;
+  }
+  100% {
+    transform: rotateY(-180deg);
+    z-index: 9999;
+  }
+}
+
+/* Reverse page turn animation */
+@keyframes pageTurnReverse {
+  0% { 
+    transform: rotateY(-180deg);
+    z-index: 9999;
+  }
+  49% {
+    z-index: 9999;
+  }
+  50% {
+    z-index: 9999;
+  }
+  70% {
+    transform: rotateY(-60deg);
+    z-index: 9999;
+  }
+  100% {
+    transform: rotateY(0deg);
+    z-index: 9999;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 1200px) {
+  .cookbook-container {
+    width: 800px;
+    height: 633px;
+  }
+  
+  .cookbook-container.cover-only {
+    width: 700px;
+    height: 600px;
+  }
+  
+  .cover-page {
+    width: 700px;
+    height: 600px;
+  }
+  
+  .book-page {
+    width: 700px;
+    height: 600px;
+  }
+  
+  .page {
+    width: 700px;
+    height: 600px;
+    padding: 40px 50px;
+  }
+  
+  .page-content.page {
+    padding: 30px 40px;
+  }
+  
+  .turning-page {
+    width: 700px;
+    height: 600px;
+    padding: 30px 40px;
+  }
+  
+  .turned-page {
+    width: 700px;
+    height: 600px;
+  }
+  
+  .page-content.page h1 {
+    font-size: 1.6rem;
+  }
+  
+  .page-content.page h2 {
+    font-size: 1.3rem;
+  }
+  
+  .page-content.page {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .cookbook-container {
+    width: 700px;
+    height: 566px;
+  }
+  
+  .cookbook-container.cover-only {
+    width: 500px;
+    height: 500px;
+  }
+  
+  .cover-page {
+    width: 500px;
+    height: 500px;
+  }
+  
+  .book-page {
+    width: 500px;
+    height: 500px;
+  }
+  
+  .page {
+    width: 500px;
+    height: 500px;
+    padding: 25px 15px;
+  }
+  
+  .turning-page {
+    width: 500px;
+    height: 500px;
+  }
+  
+  .turned-page {
+    width: 500px;
+    height: 500px;
+  }
+  
+  .spiral-binding {
+    width: 20px;
+  }
+  
+  .cookbook-spine {
+    left: 20px;
+  }
+  
+  .spiral-hole {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cookbook-container {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 3/2.5 !important;
+    max-height: 85vh !important;
+    transform: none !important;
+    margin: 0 auto !important;
+  }
+  
+  .page-content.page {
+    transform: scale(0.7) !important;
+    transform-origin: center !important;
+    width: 142.86% !important;
+    height: 142.86% !important;
+    padding: 15px 20px !important;
+    overflow: hidden !important;
+  }
+  
+  .page {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 30px !important;
+  }
+  
+  .page-content.page {
+    padding: 20px 25px !important;
+  }
+  
+  .turning-page {
+    padding: 20px 25px !important;
+  }
+  
+  .page-content.page h1 {
+    font-size: 1.4rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .page-content.page h2 {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.8rem !important;
+  }
+  
+  .page-content.page {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* Mobile pricing layout */
+  .pricing-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 25px 10px 30px 10px !important;
+    margin-top: 30px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: calc(100% - 60px) !important;
+  }
+  
+  .pricing-card {
+    width: 100% !important;
+    padding: 6px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    transform: scale(0.7);
+    transform-origin: center;
+  }
+  
+  .pricing-features {
+    flex: 1;
+    overflow: hidden;
+    margin: 8px 0 !important;
+  }
+  
+  .pricing-features li {
+    line-height: 1.2 !important;
+    margin-bottom: 4px !important;
+  }
+  
+  .pricing-features li {
+    font-size: 0.8rem !important;
+  }
+  
+  .pricing-amount {
+    font-size: 1.4rem !important;
+  }
+  
+  .pricing-features li {
+    font-size: 0.9rem;
+  }
+  
+  .pricing-amount {
+    font-size: 1.8rem;
+  }
+  
+  .pricing-features li {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .cookbook-container {
+    max-height: 80vh !important;
+    width: 100% !important;
+    transform: none !important;
+    aspect-ratio: 3/2.8 !important;
+  }
+  
+  .page-content.page {
+    transform: scale(0.6) !important;
+    transform-origin: center !important;
+    width: 166.67% !important;
+    height: 166.67% !important;
+    padding: 12px 15px !important;
+    overflow: hidden !important;
+  }
+  
+  .page {
+    padding: 20px !important;
+  }
+  
+  .page-content.page {
+    padding: 15px 20px !important;
+  }
+  
+  .turning-page {
+    padding: 15px 20px !important;
+  }
+  
+  .page-content.page h1 {
+    font-size: 1.3rem !important;
+    margin-bottom: 0.8rem !important;
+  }
+  
+  .page-content.page h2 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.7rem !important;
+  }
+  
+  .page-content.page {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .cookbook-container {
+    max-height: 75vh !important;
+    width: 100% !important;
+    transform: none !important;
+    aspect-ratio: 3/3 !important;
+  }
+  
+  .page-content.page {
+    transform: scale(0.5) !important;
+    transform-origin: center !important;
+    width: 200% !important;
+    height: 200% !important;
+    padding: 10px 12px !important;
+    overflow: hidden !important;
+  }
+  
+  .page {
+    padding: 15px !important;
+  }
+  
+  .page-content.page {
+    padding: 10px 15px !important;
+  }
+  
+  .turning-page {
+    padding: 10px 15px !important;
+  }
+  
+  .page-content.page h1 {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.7rem !important;
+  }
+  
+  .page-content.page h2 {
+    font-size: 1rem !important;
+    margin-bottom: 0.6rem !important;
+  }
+  
+  .page-content.page {
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  .cookbook-container.cover-only {
+    width: 320px;
+    height: 400px;
+  }
+  
+  .cover-page {
+    width: 320px;
+    height: 400px;
+    padding: 20px 15px;
+  }
+  
+  .book-page {
+    width: 320px;
+    height: 400px;
+  }
+  
+  .page {
+    width: 320px;
+    height: 400px;
+    padding: 20px 10px;
+    font-size: 0.9rem;
+  }
+  
+  .turning-page {
+    width: 320px;
+    height: 400px;
+  }
+  
+  .turned-page {
+    width: 320px;
+    height: 400px;
+  }
+  
+  .spiral-binding {
+    width: 15px;
+  }
+  
+  .cookbook-spine {
+    left: 15px;
+    width: 3px;
+  }
+  
+  .spiral-hole {
+    width: 5px;
+    height: 5px;
+    margin: 4px auto;
+  }
+  
+  .page h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .page-number {
+    bottom: 10px;
+    font-size: 0.8rem;
+  }
+}
+
+.page-image-container {
+  position: relative;
+  width: 92%;
+  height: 320px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+}
+
+.image-label {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #666;
+  font-size: 0.8rem;
+  background: rgba(255,255,255,0.7);
+  padding: 2px 0;
+}
+
+.page-screenshot {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+  .cookbook-container {
+    height: auto;
+    min-height: unset;
+    max-height: none;
+    overflow-x: hidden;
+  }
+  
+  .page-title {
+    z-index: 10;
+    font-size: 1.4rem;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    width: 90%;
+  }
+  
+  .page-content.page {
+    padding: 30px 20px;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  .book-page, .turned-page {
+    overflow-x: hidden;
+  }
+  
+  .page-content-text {
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+  .page-header {
+    margin-top: 15px;
+    font-size: 1.4rem;
+  }
+  
+  .page-content-text {
+    line-height: 1.4;
+    word-wrap: break-word;
+    margin: 10px 0 15px;
+    font-size: 0.85rem;
+    padding: 0 15px;
+  }
+  
+  .page-image-container {
+    height: 220px;
+    margin-top: 10px;
+    width: 88%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  .page-screenshot {
+    max-width: 100%;
+    object-fit: contain;
+  }
+  
+  .image-label {
+    font-size: 0.75rem;
+  }
+  
+  .page-number {
+    bottom: 10px;
+    font-size: 0.9rem;
+  }
+  
+  .faq-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .faq-list li {
+    padding: 10px 5px;
+    font-size: 0.85rem;
+  }
+  
+  .toc-list li,
+  .faq-list li {
+    word-break: break-word;
+    hyphens: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .cookbook-container {
+    height: auto;
+    min-height: unset;
+    max-height: none;
+    overflow-x: hidden;
+  }
+  
+  /* Table of Contents specific fixes */
+  .toc-content {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .toc-list {
+    padding-left: 10px;
+    margin-left: 0;
+    text-align: left;
+    font-size: 0.8rem;
+    list-style-position: inside;
+  }
+  
+  /* FAQ page specific fixes */
+  .faq-list {
+    padding-left: 10px;
+    margin-left: 0;
+    text-align: left;
+    font-size: 0.75rem;
+  }
+  
+  .faq-list li {
+    margin-bottom: 10px;
+  }
+  
+  .faq-list li strong {
+    display: block;
+    margin-bottom: 3px;
+  }
+  
+  /* Pricing page specific fixes */
+  .pricing-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .pricing-card {
+    width: 90%;
+    margin: 0 auto;
+  }
+  
+  .page-title {
+    font-size: 1.2rem;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    width: 85%;
+  }
+  
+  .page-content.page {
+    padding: 20px 15px;
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  .page {
+    padding: 20px 15px;
+    overflow-x: hidden;
+  }
+  
+  .page-content-text {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    font-size: 0.8rem;
+    padding: 0 10px;
+  }
+  
+  /* Inspiration page specific fixes */
+  .inspiration-logo-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 10px;
+  }
+  
+  .inspiration-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .page-header {
+    margin-top: 10px;
+    font-size: 1.2rem;
+  }
+  
+  .page-content-text {
+    font-size: 0.8rem;
+    margin: 8px 0 12px;
+    padding: 0 12px;
+    line-height: 1.3;
+  }
+  
+  .page-image-container {
+    height: 180px;
+    width: 85%;
+    margin-top: 8px;
+  }
+  
+  .book-page {
+    padding-top: 12px;
+  }
+  
+  .page-number {
+    bottom: 8px;
+    font-size: 0.8rem;
+    gap: 5px;
+  }
+}
+
+.page-content-text {
+  text-align: center;
+  padding: 0 20px;
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+}
+
+.page-number {
+  position: relative;
+  margin-top: auto;
+  padding-top: 20px;
+  width: 100%;
+  text-align: center;
+  font-size: 1rem;
+  color: #555;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.toc-content {
+  padding: 20px;
+  height: calc(100% - 60px);
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 1rem;
+}
+
+.faq-content {
+  padding: 20px;
+}
+
+.faq-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.faq-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.faq-list li:last-child {
+  border-bottom: none;
+}
+
+.pricing-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  padding: 20px;
+}
+
+.pricing-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  padding: 25px;
+  width: 280px;
+  text-align: center;
+}
+
+.pricing-highlight {
+  position: relative;
+  border: 2px solid #ff7043;
+}
+
+.pricing-header {
+  margin-bottom: 15px;
+}
+
+.pricing-header h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.4rem;
+  color: #333;
+}
+
+.pricing-badge {
+  background: #f5f5f5;
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pricing-best {
+  background: #ffecb3;
+  color: #ff6f00;
+}
+
+.pricing-amount {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #333;
+  margin: 15px 0;
+}
+
+.pricing-period {
+  font-size: 1rem;
+  font-weight: normal;
+  color: #777;
+}
+
+.pricing-savings {
+  color: #4caf50;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.pricing-features {
+  text-align: left;
+  padding: 0;
+  margin: 20px 0 10px 0;
+  list-style: none;
+}
+
+.pricing-features li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.pricing-features li:last-child {
+  border-bottom: none;
+}
+
+.pricing-button,
+.pricing-button.highlight,
+.pricing-button:hover {
+  display: none;
+}
+
+.inspiration-logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.inspiration-logo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  padding: 5px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.iphone-device .cookbook-container {
+  height: auto !important;
+  aspect-ratio: 3/3 !important;
+  min-height: unset !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+.iphone-device .turned-page,
+.iphone-device .book-page {
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+.iphone-device .page-content.page {
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+}
+
+.iphone-device .page-image-container {
+  height: 200px !important;
+}
+
+.iphone-device .page-screenshot {
+  max-height: 200px !important;
+}

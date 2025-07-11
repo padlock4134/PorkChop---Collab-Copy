@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PorkChop Pitch Board</title>
+  <style>
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: #fff;
+      color: #1A233F; /* Dark Blue for readability */
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 950px;
+      margin: 36px auto;
+      padding: 24px;
+      background: #fff;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 8px solid #F5E9DA;
+      border-radius: 22px;
+      box-shadow: 0 0 0 2px #e2d2b2;
+    }
+    .header {
+      text-align: center;
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #1A233F; /* Dark Blue for readability */
+      margin-bottom: 0.2em;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.95em;
+      color: #A7E9D1;
+      margin-bottom: 0.8em;
+      font-style: italic;
+    }
+    .top-row {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+    }
+    .box {
+      background: #F5E9DA;
+      border-radius: 14px;
+      box-shadow: 0 2px 6px rgba(43,74,111,0.06);
+      border: 2px solid #000;
+      flex: 1;
+      padding: 8px;
+      min-width: 0;
+      min-height: 75px;
+    }
+    .box h2 {
+      margin-top: 0;
+      margin-bottom: 0.5em;
+      font-size: 1em;
+      color: #1A233F; /* Dark Blue for readability */
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+    }
+    .section {
+      background: #37628a;
+      border-radius: 12px;
+      padding: 7px 8px;
+      margin-top: 6px;
+      margin-bottom: 0;
+      border: 2px solid #000;
+    }
+    .section h3 {
+      margin: 0 0 0.3em 0;
+      font-size: 0.96em;
+      color: #fff; /* White text for contrast on dark blue */
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+    }
+    .section {
+      color: #fff;
+    }
+    .section ul {
+      color: #fff;
+    }
+    /* Market Opportunity table content should be black for readability */
+    .section#market-opportunity table, .section#market-opportunity td, .section#market-opportunity th {
+      color: #111;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.3em;
+      margin-bottom: 0.3em;
+      background: #fff;
+      color: #1A233F;
+      font-size: 0.92em;
+    }
+    th, td {
+      border: 1px solid #A7E9D1;
+      padding: 4px 8px;
+    }
+    th {
+      background: #F5E9DA;
+      font-weight: bold;
+    }
+    .footer {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 0.96em;
+      color: #1A233F;
+    }
+    .qr {
+      display: block;
+      margin: 10px auto 3px auto;
+      width: 80px;
+      height: 80px;
+      background: #eee;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+    .cta {
+      font-weight: bold;
+      color: #37628a; /* Darker Blue */
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+    .enjoy {
+      color: #FFB366;
+      font-size: 0.96em;
+      margin-top: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:0.2em;justify-content:center;">
+      <img src="logo.png" alt="PorkChop Logo" style="height:60px;width:auto;display:inline-block;vertical-align:middle;">
+      <div class="header">PORKCHOP: Your Personalized Culinary Ecosystem</div>
+    </div>
+    <div class="subtitle" style="color:#3399cc;">A Complete Culinary Journey in your pocket</div>
+
+    <div class="top-row">
+      <div class="box">
+        <h2>🥴 THE PROBLEM</h2>
+        <ul>
+          <li>Stuck in a recipe rut—making the same meals every week</li>
+          <li>Cooking feels overwhelming and time-consuming</li>
+          <li>“What’s for dinner?” is a daily struggle</li>
+          <li>Recipes don’t adapt to skill or what you have</li>
+          <li>Finding quality ingredients is a hassle</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>🥘 OUR SOLUTION</h2>
+        <ul>
+          <li>AI-powered recipe generation</li>
+          <li>Local market & specialty shop discovery</li>
+          <li>Culinary School: tutorials & hacks</li>
+          <li>Chef Freddie: real-time cooking help</li>
+          <li>WoW-inspired leveling system for continued learning and mastery</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>🏆 WHY WE’RE BETTER</h2>
+        <ul>
+          <li>Complete ecosystem, not just recipes</li>
+          <li>True AI personalization (skill, equipment, ingredients)</li>
+          <li>Multi-channel: DTC, loyalty, chef marketplace</li>
+          <li>$11/month premium experience</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section" id="market-opportunity">
+      <h3>📊 MARKET OPPORTUNITY</h3>
+      <table>
+        <tr>
+          <th>Statistic</th>
+          <th>Why It Matters</th>
+        </tr>
+        <tr>
+          <td>100M+ Americans cook at home 3x/week <br><small>(Statista, 2024)</small></td>
+          <td>Huge addressable audience for meal solutions</td>
+        </tr>
+        <tr>
+          <td>Recipe app market: $1.2B+ by 2027 <br><small>(Allied Market Research)</small></td>
+          <td>Proven demand for digital cooking tools</td>
+        </tr>
+        <tr>
+          <td>Grocery e-commerce: $150B+ by 2026 <br><small>(eMarketer)</small></td>
+          <td>Retailers need new ways to drive loyalty</td>
+        </tr>
+        <tr>
+          <td>Hospitality: $250B+ US market <br><small>(Statista, 2024)</small></td>
+          <td>Hotels & resorts seeking digital guest engagement</td>
+        </tr>
+        <tr>
+          <td>Culinary education: Growing 15%+ YoY <br><small>(IBISWorld)</small></td>
+          <td>Users want to learn new skills from experts</td>
+        </tr>
+        <tr>
+          <td><b>No one else offers a complete culinary ecosystem</b></td>
+          <td>PorkChop is first-to-market in this category</td>
+        </tr>
+        <tr>
+          <td><b>$20M+ annual revenue target by 2028</b></td>
+          <td>Scalable business with multi-channel strategy</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="partnerships-box" style="background:#37628a; border:2px solid #000;">
+      <h3>🚀 GO-TO-MARKET CHANNELS</h3>
+      <ul>
+        <li><b>Grocery:</b> Loyalty & engagement for retail partners</li>
+        <li><b>Hospitality:</b> In-room and guest culinary experiences</li>
+        <li><b>Education:</b> Wellness, dining, and curriculum integrations</li>
+        <li><b>Chef Marketplace:</b> Culinary creators drive engagement</li>
+      </ul>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:10px;">
+  <div class="section" style="background:#37628a; border:2px solid #000; flex:1; min-width:0; color:#fff;">
+    <h3>📦 HOW WE DELIVER</h3>
+    <ul>
+      <li>Direct-to-Consumer App</li>
+      <li>White-Label Partnerships</li>
+      <li>Chef Video Marketplace</li>
+      <li>Institutional/Education Integrations</li>
+    </ul>
+  </div>
+  <div class="section" style="background:#37628a; border:2px solid #000; flex:1; min-width:0; color:#fff;">
+    <h3>🏆 WHY WE WIN</h3>
+    <ul>
+      <li>True culinary ecosystem, not just recipes</li>
+      <li>WoW-style gamification drives retention</li>
+      <li>Chef-driven, premium content</li>
+      <li>Loyalty integration for partners</li>
+    </ul>
+  </div>
+  <div class="section" style="background:#37628a; border:2px solid #000; flex:1; min-width:0; color:#fff;">
+    <h3>🔜 WHAT'S NEXT?</h3>
+    <ul>
+      <li>App store launches (iOS & Android)</li>
+      <li>Activate DTC, B2B, and chef partnerships</li>
+      <li>Recruit technical co-founder</li>
+    </ul>
+  </div>
+</div>
+
+
+  </div>
+</body>
+</html>

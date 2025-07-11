@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: theme('colors.sand');
+  font-family: theme('fontFamily.retro');
+}
+
+/* Markdown styles for TermsModal */
+.terms-content {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 1rem;
+  color: #222;
+  line-height: 1.7;
+  padding: 0.5rem 0;
+}
+
+.terms-content h1,
+.terms-content h2,
+.terms-content h3 {
+  font-weight: bold;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.terms-content h1 { font-size: 2rem; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
+.terms-content h2 { font-size: 1.5rem; }
+.terms-content h3 { font-size: 1.2rem; }
+
+.terms-content ul, .terms-content ol {
+  margin: 1em 0 1em 2em;
+}
+
+.terms-content li {
+  margin-bottom: 0.5em;
+}
+
+.terms-content strong {
+  font-weight: bold;
+}
+
+.terms-content em {
+  font-style: italic;
+}
+
+.terms-content hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 2em 0;
+}
