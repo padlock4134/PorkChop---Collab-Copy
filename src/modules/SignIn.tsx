@@ -21,7 +21,7 @@ const SignIn = () => {
       if (error) {
         setError(error.message);
       } else {
-        // Check if user has an active subscription
+        // Get user info after sign in
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
@@ -32,8 +32,7 @@ const SignIn = () => {
             setIsLoading(false);
             return;
           }
-          
-          // Check for active subscription
+          // Check subscription status in user_subscriptions table
           const { data, error: subscriptionError } = await supabase
             .from('user_subscriptions')
             .select('status')
@@ -44,14 +43,15 @@ const SignIn = () => {
           if (subscriptionError || !data) {
             // No active subscription found
             setError('Access denied. Please purchase a subscription to continue.');
-            await supabase.auth.signOut(); // Sign them out
+            // Allow them to stay logged in but redirect to subscription page
             setIsLoading(false);
+            navigate('/subscription'); // Replace with your actual subscription page path
             return;
           }
         }
         
         // User has confirmed email and active subscription, proceed to app
-        navigate('/my-kitchen');
+        navigate('/dashboard');
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

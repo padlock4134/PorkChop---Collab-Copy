@@ -24,7 +24,10 @@ exports.handler = async function(event) {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
-      customer_email: email, // optional, pre-fills email
+      customer_email: email, // pre-fills email and is used by webhook
+      metadata: {
+        user_email: email, // redundant but explicit for webhook
+      },
       line_items: [
         { price: priceId, quantity: 1 }
       ],
