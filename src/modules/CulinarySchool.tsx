@@ -168,9 +168,8 @@ const CulinarySchool = () => {
   }, [isRecipeSelected, selectedRecipe?.id]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 pt-8 pb-8 bg-sand min-h-screen">
-
-        <div className="max-w-4xl mx-auto mt-8">
+    <div className="max-w-2xl mx-auto px-4 pt-8 pb-8 bg-white min-h-screen rounded-lg shadow">
+        <div className="w-full mx-auto mt-8">
       <div className="flex items-center justify-center mb-2">
         <span className="text-5xl mr-2">🍳</span>
         <h1 className="text-3xl font-retro text-maineBlue mb-0">Culinary School</h1>
@@ -209,7 +208,7 @@ const CulinarySchool = () => {
               ))}
             </ol>
             {/* Recipe Card Display at Bottom (matching MyCookBook RecipeCard layout) */}
-            <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden w-full max-w-3xl min-h-[350px] mt-8 mx-auto">
+            <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden w-full min-h-[350px] mt-8 mx-auto">
               {/* Left Page */}
               <div className="flex-1 p-6 bg-weatheredWhite border-r border-gray-200 flex flex-col">
                 {selectedRecipe.image && (

@@ -120,7 +120,7 @@ const MyKitchen = () => {
 
   const visionKey = (import.meta as any).env.VITE_GOOGLE_VISION_API_KEY;
   return (
-    <div className="max-w-2xl mx-auto mt-8">
+    <div className="max-w-2xl mx-auto mt-8 bg-white p-6 rounded-lg shadow">
       <div className="flex items-center justify-center mb-2">
         <span className="text-5xl mr-2">🐟</span>
         <h1 className="text-3xl font-retro text-maineBlue mb-0">My Kitchen</h1>
