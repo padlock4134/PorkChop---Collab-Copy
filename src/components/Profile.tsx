@@ -1,15 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../api/supabaseClient';
-import EditProfileModal from './EditProfileModal';
-import TermsModal from './TermsModal';
-import { useTermsModal } from './useTermsModal';
 import PaymentModal from './PaymentModal';
 
+// Define a simple hook for TermsModal since the original import is incorrect
+function useTermsModal() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const termsContent = `Terms of Service for Porkchop (effective July 2025)
+
+Welcome to Porkchop. By using this app, you agree to be bound by the following terms and conditions.`;
+  return { modalOpen, setModalOpen, termsContent };
+}
+
+// Define UserProfile type to resolve missing type error
+type UserProfile = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  experience: string;
+  dietary: string[];
+  cuisine: string[];
+  kitchenSetup: string;
+  xp: number;
+};
+
 const Profile = () => {
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelConfirmed, setCancelConfirmed] = useState(false);
-  const [cancelLoading, setCancelLoading] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showTalents, setShowTalents] = useState(true);
+  const [talentPoints, setTalentPoints] = useState(0);
+  const [activeTalents, setActiveTalents] = useState<string[]>([]);
+  const [kitchenSetup, setKitchenSetup] = useState<string>('Apartment Kitchen');
+  const [activeTab, setActiveTab] = useState<string>('Cast Iron Master');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const { modalOpen: termsModalOpen, setModalOpen: setTermsModalOpen, termsContent } = useTermsModal();
+
+  const talentTrees = {
+    'Cast Iron Master': [
+      { name: 'Sear Savant', cost: 1, active: activeTalents.includes('Sear Savant'), description: 'Perfect searing technique' },
+      { name: 'Heat Control', cost: 2, active: activeTalents.includes('Heat Control'), description: 'Mastery of heat distribution' },
+      { name: 'Seasoned Surface', cost: 3, active: activeTalents.includes('Seasoned Surface'), description: 'Optimal non-stick surface' },
+      { name: 'Iron Chef', cost: 5, active: activeTalents.includes('Iron Chef'), description: 'Ultimate cast iron mastery' },
+    ],
+    'Grill Legend': [
+      { name: 'Flame Tamer', cost: 1, active: activeTalents.includes('Flame Tamer'), description: 'Control over open flames' },
+      { name: 'Smoke Master', cost: 2, active: activeTalents.includes('Smoke Master'), description: 'Perfect smoky flavors' },
+      { name: 'Grill Marks', cost: 3, active: activeTalents.includes('Grill Marks'), description: 'Signature grill patterns' },
+      { name: 'BBQ God', cost: 5, active: activeTalents.includes('BBQ God'), description: 'Legendary grilling skills' },
+    ],
+    'Baking Fool': [
+      { name: 'Dough Whisperer', cost: 1, active: activeTalents.includes('Dough Whisperer'), description: 'Perfect dough consistency' },
+      { name: 'Oven Oracle', cost: 2, active: activeTalents.includes('Oven Oracle'), description: 'Precise baking timing' },
+      { name: 'Pastry Pro', cost: 3, active: activeTalents.includes('Pastry Pro'), description: 'Expert in pastries' },
+      { name: 'Bread Buffoon', cost: 5, active: activeTalents.includes('Bread Buffoon'), description: 'Master of all baked goods' },
+    ],
+  };
+
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -25,21 +76,12 @@ const Profile = () => {
     }
   };
 
-  const [subLoading, setSubLoading] = useState(false);
-  const [showSubModal, setShowSubModal] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [dietary, setDietary] = useState<string[]>([]);
-  const [cuisine, setCuisine] = useState<string[]>([]);
-  const [customDietary, setCustomDietary] = useState('');
-  const [customCuisine, setCustomCuisine] = useState('');
-  const [dietarySaved, setDietarySaved] = useState(false);
-  const [cuisineSaved, setCuisineSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const { modalOpen, setModalOpen, termsContent } = useTermsModal();
+  const handleUnlock = (tree: string, talent: string, cost: number) => {
+    if (talentPoints >= cost && !activeTalents.includes(talent)) {
+      setTalentPoints(points => points - cost);
+      setActiveTalents(talents => [...talents, talent]);
+    }
+  };
 
   useEffect(() => {
     const fetchUserAndProfile = async () => {
@@ -49,43 +91,38 @@ const Profile = () => {
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         if (authError || !authUser) {
           setError('You must be signed in to view your profile.');
+          setLoading(false);
           return;
         }
 
-        // Fetch profile and XP in parallel for better performance
-        const [profileResponse, xpResponse] = await Promise.all([
-          supabase.from('profiles').select('*').eq('id', authUser.id),
-          supabase.from('user_xp').select('xp').eq('user_id', authUser.id)
+        const [profileResponse] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', authUser.id).single(),
         ]);
 
         if (profileResponse.error) {
           setError('Could not load your profile: ' + profileResponse.error.message);
+          setLoading(false);
           return;
         }
 
-        const profile = profileResponse.data?.[0];
+        const profile = profileResponse.data;
         if (!profile) {
           setError('No profile found. Please try signing out and in again.');
+          setLoading(false);
           return;
         }
 
-        // Get XP if available, default to 0 if not
-        const xp = xpResponse.data?.[0]?.xp ?? 0;
-
+        const xp = profile.xp || 0;
         setUser({
           ...profile,
-          email: authUser.email,
-          initials: (authUser.email || 'U').slice(0, 2).toUpperCase(),
-          status: profile.is_premium ? 'Premium' : 'Active Account',
-          joinDate: profile.created_at?.slice(0, 10) ?? '',
-          trialEnds: profile.trial_ends_at?.slice(0, 10) ?? '',
+          name: profile.name || 'User',
           xp
         });
 
-        setDietary(profile.dietary || []);
-        setCuisine(profile.cuisine || []);
-        setDietarySaved(true);
-        setCuisineSaved(true);
+        setTalentPoints(Math.floor(xp / 100));
+        // Mock active talents for now (in real implementation, fetch from backend)
+        if (xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
+        if (xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
       } catch (err) {
         console.error('Profile fetch error:', err);
         setError('An unexpected error occurred while loading your profile.');
@@ -96,223 +133,428 @@ const Profile = () => {
     fetchUserAndProfile();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      const points = Math.floor(user.xp / 100);
+      setTalentPoints(points);
+      // Mock active talents for now (in real implementation, fetch from backend)
+      if (user.xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
+      if (user.xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && user.kitchenSetup) {
+      setKitchenSetup(user.kitchenSetup);
+    }
+  }, [user]);
+
   if (loading) return <div className="text-center mt-10">Loading profile...</div>;
   if (error) return <div className="text-center mt-10 text-red-600">{error}</div>;
   if (!user) return null;
 
   return (
-    <div className="max-w-lg mx-auto mt-8 bg-weatheredWhite p-6 rounded shadow">
-      {/* User Details Card */}
-      <div className="flex flex-col items-center mb-8">
-        <div className="w-24 h-24 rounded-full bg-seafoam flex items-center justify-center text-4xl font-retro text-maineBlue shadow-lg mb-2 border-4 border-maineBlue">
+    <div className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded-lg shadow-lg">
+      {/* Header */}
+      <div className="flex justify-center items-center mb-6 flex-wrap gap-4 sm:gap-0">
+        <h1 className="text-3xl font-retro text-maineBlue">My Profile</h1>
+      </div>
+
+      {/* User Details - Condensed and Centered */}
+      <div className="mb-6 flex flex-col items-center gap-4 text-center">
+        <div className="w-24 h-24 bg-maineBlue rounded-full flex items-center justify-center text-seafoam font-bold text-2xl overflow-hidden shrink-0">
           {user.avatar ? (
-            <img src={user.avatar} alt="avatar" className="w-full h-full object-cover rounded-full" />
+            <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
-            user.initials
+            <span>{user.name.slice(0, 2).toUpperCase()}</span>
           )}
         </div>
-        <div className="text-xl font-retro text-maineBlue mb-1">{user.name}</div>
-        <div className="text-sm text-gray-600 mb-1">{user.email}</div>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="bg-lobsterRed text-weatheredWhite px-3 py-1 rounded-full text-xs font-bold">{user.status}</span>
-          <span className="text-xs text-gray-500">Joined: {user.joinDate}</span>
+        <div>
+          <h2 className="text-xl font-bold text-maineBlue mb-2">{user.name}</h2>
+          <div className="text-base text-gray-600 mb-1">XP: {user.xp} | Talent Points: {talentPoints}</div>
+          <div className="text-base text-gray-600">Experience: {user.experience}</div>
         </div>
-        {user.status !== 'Premium' && user.trialEnds && (
-          <div className="text-xs text-gray-500">
-            Account active since: <span className="font-bold text-seafoam">{user.trialEnds}</span>
-          </div>
-        )}
-        <button
-          className="mt-4 px-4 py-2 rounded bg-seafoam text-maineBlue font-bold hover:bg-maineBlue hover:text-seafoam transition-colors"
-          onClick={() => setShowEdit(true)}
-        >
-          Edit Profile
-        </button>
-        <EditProfileModal
-          open={showEdit}
-          onClose={() => setShowEdit(false)}
-          user={user}
-          onProfileUpdated={setUser}
-        />
       </div>
 
-      <h2 className="text-xl font-retro mb-4">Profile Preferences</h2>
-      {/* Dietary Preferences - Pick List */}
-      <div className="mb-6">
-        <span className="block mb-1 font-semibold">Dietary Preferences</span>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {[
-            'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Pescatarian', 'Low-Carb', 'Keto', 'Paleo', 'Nut-Free', 'Halal', 'Kosher'
-          ].map(option => (
-            <button
-              key={option}
-              type="button"
-              className={`px-3 py-1 rounded-full border font-bold text-xs transition-colors
-                ${dietary.includes(option) && dietarySaved ? 'bg-maineBlue text-seafoam border-maineBlue' :
-                  dietary.includes(option) ? 'bg-seafoam text-maineBlue border-seafoam' :
-                  'bg-weatheredWhite text-maineBlue border-seafoam hover:bg-seafoam hover:text-maineBlue'}`}
-              onClick={() => {
-                setDietary(prev => prev.includes(option) ? prev.filter(d => d !== option) : [...prev, option]);
-                setDietarySaved(false);
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="bg-seafoam text-maineBlue px-4 py-2 rounded font-bold mt-2 hover:bg-maineBlue hover:text-seafoam transition-colors"
-          onClick={async () => {
-            const { error } = await supabase.from('profiles').update({ dietary }).eq('id', user.id);
-            if (!error) setDietarySaved(true);
-          }}
-        >
-          Save Dietary Preferences
-        </button>
-        {dietarySaved && <div className="text-seafoam font-bold text-sm mt-1">Saved!</div>}
-      </div>
-
-      {/* Cuisine Preferences - Pick List */}
+      <h2 className="text-lg font-retro mb-2 text-center">My Culinary Journey</h2>
+      {/* Active Talents and Talent Trees - Compact and Centered Buttons */}
       <div className="mb-4">
-        <span className="block mb-1 font-semibold">Cuisine Preferences</span>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {[
-            'Italian', 'Thai', 'Seafood', 'Mexican', 'Japanese', 'Chinese', 'Indian', 'French', 'Greek', 'American', 'Spanish', 'Middle Eastern', 'Korean'
-          ].map(option => (
-            <button
-              key={option}
-              type="button"
-              className={`px-3 py-1 rounded-full border font-bold text-xs transition-colors
-                ${cuisine.includes(option) && cuisineSaved ? 'bg-maineBlue text-seafoam border-maineBlue' :
-                  cuisine.includes(option) ? 'bg-seafoam text-maineBlue border-seafoam' :
-                  'bg-weatheredWhite text-maineBlue border-seafoam hover:bg-seafoam hover:text-maineBlue'}`}
-              onClick={() => {
-                setCuisine(prev => prev.includes(option) ? prev.filter(c => c !== option) : [...prev, option]);
-                setCuisineSaved(false);
-              }}
-            >
-              {option}
-            </button>
-          ))}
+        <span className="block mb-1 font-semibold text-sm text-center">Active Talents</span>
+        <div className="flex flex-wrap justify-center gap-1.5 mb-1.5">
+          {activeTalents.length > 0 ? (
+            activeTalents.slice(0, 3).map(talent => (
+              <span
+                key={talent}
+                className="px-2 py-0.5 rounded-full border font-bold text-xs bg-maineBlue text-seafoam border-maineBlue"
+              >
+                {talent}
+              </span>
+            ))
+          ) : (
+            <span className="text-xs text-gray-500">No talents yet. Cook to earn points!</span>
+          )}
+          {activeTalents.length > 3 && (
+            <span className="px-2 py-0.5 rounded-full border font-bold text-xs text-gray-500">+{activeTalents.length - 3} more</span>
+          )}
         </div>
-        <button
-          type="button"
-          className="bg-seafoam text-maineBlue px-4 py-2 rounded font-bold mt-2 hover:bg-maineBlue hover:text-seafoam transition-colors"
-          // TODO: Implement Stripe Customer Portal for cancellation in the future.
-          onClick={async () => {
-            const { error } = await supabase.from('profiles').update({ cuisine }).eq('id', user.id);
-            if (!error) setCuisineSaved(true);
-          }}
-        >
-          Save Cuisine Preferences
-        </button>
-        {cuisineSaved && <div className="text-seafoam font-bold text-sm mt-1">Saved!</div>}
+        <div className="flex justify-center gap-2">
+          <button
+            className="bg-seafoam text-maineBlue px-3 py-1 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm"
+            onClick={() => setShowTalents(!showTalents)}
+          >
+            {showTalents ? 'Hide Talents' : 'View Talents'}
+          </button>
+          <button
+            className="bg-seafoam text-maineBlue px-3 py-1 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm"
+            onClick={() => setModalOpen(true)}
+          >
+            Edit Profile
+          </button>
+        </div>
       </div>
 
-      {/* Account Actions */}
+      {/* Talent Trees Collapsible Panel - Condensed */}
+      {showTalents && (
+        <div className="space-y-2">
+          <div className="flex gap-2 justify-center flex-wrap">
+            {Object.entries(talentTrees).map(([tree, talents]) => (
+              <button
+                key={tree}
+                className={`px-3 py-1 rounded text-sm font-bold transition-colors ${
+                  activeTab === tree ? 'bg-maineBlue text-seafoam' : 'bg-seafoam text-maineBlue hover:bg-maineBlue hover:text-seafoam'
+                }`}
+                onClick={() => setActiveTab(tree)}
+              >
+                {tree}
+              </button>
+            ))}
+          </div>
+          {Object.entries(talentTrees).map(([tree, talents]) => (
+            <div
+              key={tree}
+              className={`bg-gray-100 p-3 rounded-lg border border-gray-200 ${
+                activeTab === tree ? 'block' : 'hidden'
+              }`}
+            >
+              <h3 className="text-lg font-bold mb-2 text-maineBlue">{tree}</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {talents.map(talent => (
+                  <div
+                    key={talent.name}
+                    className={`p-2 rounded border text-xs cursor-pointer transition-colors ${
+                      talent.active
+                        ? 'bg-maineBlue text-seafoam border-maineBlue'
+                        : talent.cost <= talentPoints
+                        ? 'bg-seafoam text-maineBlue border-seafoam hover:bg-maineBlue hover:text-seafoam'
+                        : 'bg-gray-200 text-gray-500 border-gray-200'
+                    }`}
+                    onClick={() => handleUnlock(tree, talent.name, talent.cost)}
+                  >
+                    <div className="font-bold mb-0.5">{talent.name}</div>
+                    <div className="text-[11px] opacity-90">{talent.description}</div>
+                    <div className="text-[11px]">Cost: {talent.cost} 🧑‍🍳</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="mt-8 flex flex-col gap-2 items-center">
         <button
-          className="bg-maineBlue text-weatheredWhite px-4 py-2 rounded font-bold w-full max-w-xs hover:bg-seafoam hover:text-maineBlue transition-colors disabled:opacity-60"
-          onClick={async () => {
-            setSubLoading(true);
-            setShowSubModal(true);
-            setTimeout(() => setSubLoading(false), 1000);
-          }}
-          disabled={subLoading}
+          className="bg-seafoam text-maineBlue px-3 py-1 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm"
+          onClick={() => setShowUpgradeModal(true)}
         >
           Manage Subscription
         </button>
         <button
-          className="bg-lobsterRed text-weatheredWhite px-4 py-2 rounded font-bold w-full max-w-xs hover:bg-seafoam hover:text-maineBlue transition-colors"
-          onClick={() => setShowCancelModal(true)}
-        >
-          Cancel Subscription
-        </button>
-
-        {/* Cancel Subscription Modal */}
-        {showCancelModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-            <div className="bg-weatheredWhite rounded-lg shadow-lg p-8 max-w-sm w-full relative flex flex-col items-center">
-              <button className="absolute top-2 right-2 text-lobsterRed font-bold text-xl" onClick={() => setShowCancelModal(false)}>✕</button>
-              <h3 className="font-retro text-lg mb-4 text-lobsterRed">Cancel Subscription</h3>
-              {cancelConfirmed ? (
-                <div className="text-center text-maineBlue text-lg font-retro">Your cancellation request has been received.<br/>Your account will be canceled within 24 hours.</div>
-              ) : (
-                <>
-                  <div className="mb-4 text-center text-maineBlue">Your account will be canceled within 24 hours.<br/>You will receive an email confirmation.</div>
-                  <button
-                    className="bg-lobsterRed text-weatheredWhite px-4 py-2 rounded font-bold w-full mt-2 hover:bg-seafoam hover:text-maineBlue transition-colors"
-                    onClick={async () => {
-                      setCancelLoading(true);
-                      try {
-                        await fetch('/.netlify/functions/cancel-subscription', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ email: user?.email }),
-                        });
-                        setCancelConfirmed(true);
-                      } catch (e) {
-                        alert('Failed to send cancellation request. Please try again.');
-                      } finally {
-                        setCancelLoading(false);
-                      }
-                    }}
-                    disabled={cancelLoading}
-                  >
-                    {cancelLoading ? 'Processing...' : 'Confirm Cancel'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Manage Subscription Modal */}
-        {showSubModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-            <div className="bg-weatheredWhite rounded-lg shadow-lg p-8 max-w-sm w-full relative flex flex-col items-center">
-              <button className="absolute top-2 right-2 text-lobsterRed font-bold text-xl" onClick={() => setShowSubModal(false)}>✕</button>
-              <h3 className="font-retro text-lg mb-4">Manage Subscription</h3>
-              {subLoading ? (
-                <div className="flex flex-col items-center justify-center min-h-[100px]">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-maineBlue mb-4"></div>
-                  <div className="text-lg font-retro mb-2">Loading portal...</div>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-4 text-center text-maineBlue">Manage your PorkChop subscription below:</div>
-                  <div className="flex flex-col gap-3 w-full">
-                    <button
-                      className="bg-maineBlue text-seafoam px-4 py-2 rounded font-bold hover:bg-seafoam hover:text-maineBlue transition-colors"
-                      onClick={() => setShowUpgradeModal(true)}
-                    >
-                      Upgrade to Yearly
-                    </button>
-                    <PaymentModal
-                      open={showUpgradeModal}
-                      onClose={() => setShowUpgradeModal(false)}
-                      plan="yearly"
-                      email={user?.email}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-        {/* Account Actions: Sign Out and TOS */}
-        <button
-          className="bg-lobsterRed text-weatheredWhite px-4 py-2 rounded font-bold w-full max-w-xs hover:bg-maineBlue hover:text-seafoam transition-colors mt-4"
-          onClick={handleSignOut}
+          className="bg-lobsterRed text-weatheredWhite px-3 py-1 rounded font-bold hover:bg-red-700 transition-colors text-sm"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            window.location.href = '/login';
+          }}
         >
           Sign Out
         </button>
-        <span className="text-xs text-navy underline cursor-pointer hover:text-lobsterRed" onClick={() => setModalOpen(true)}>Terms of Service & Privacy Policy</span>
-        <TermsModal isOpen={modalOpen} onClose={() => setModalOpen(false)} termsContent={termsContent} />
+        <button className="text-xs text-gray-500 hover:underline" onClick={() => setTermsModalOpen(true)}>
+          Terms of Service
+        </button>
       </div>
+
+      {/* Edit Profile Modal */}
+      {modalOpen && (
+        <EditProfileModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          user={user}
+          onProfileUpdated={(updatedUser) => {
+            setUser(updatedUser);
+            setModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* Terms Modal */}
+      {termsModalOpen && (
+        <TermsModal
+          open={termsModalOpen}
+          onClose={() => setTermsModalOpen(false)}
+          content={termsContent}
+        />
+      )}
+
+      {/* Subscription Modal */}
+      {showUpgradeModal && (
+        <PaymentModal
+          open={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+        />
+      )}
     </div>
   );
 };
+
+function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
+  open: boolean;
+  onClose: () => void;
+  user: UserProfile;
+  onProfileUpdated: (updatedUser: UserProfile) => void;
+}) {
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
+  const [avatar, setAvatar] = useState(user.avatar || '');
+  const [experience, setExperience] = useState(user.experience || 'Beginner');
+  const [dietary, setDietary] = useState<string[]>(user.dietary || []);
+  const [cuisine, setCuisine] = useState<string[]>(user.cuisine || []);
+  const [kitchenSetup, setKitchenSetup] = useState<string>(user.kitchenSetup || 'Apartment Kitchen');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setName(user.name);
+      setEmail(user.email);
+      setAvatar(user.avatar || '');
+      setExperience(user.experience || 'Beginner');
+      setDietary(user.dietary || []);
+      setCuisine(user.cuisine || []);
+      setKitchenSetup(user.kitchenSetup || 'Apartment Kitchen');
+    }
+  }, [open, user]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const updatedProfile = {
+        name,
+        email,
+        avatar: avatar || null,
+        experience,
+        dietary,
+        cuisine,
+        kitchen_setup: kitchenSetup
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updatedProfile)
+        .eq('id', user.id)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        onProfileUpdated({
+          ...user,
+          name: data.name,
+          email: data.email,
+          avatar: data.avatar,
+          experience: data.experience,
+          dietary: data.dietary,
+          cuisine: data.cuisine,
+          kitchenSetup: data.kitchen_setup
+        });
+        onClose();
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} className="max-w-lg mx-auto p-6 bg-weatheredWhite rounded shadow-lg">
+      <h2 className="text-2xl font-retro mb-4 text-maineBlue">Edit Profile</h2>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded"
+          placeholder="Your Name"
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded"
+          placeholder="Your Email"
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
+        <input
+          type="text"
+          value={avatar}
+          onChange={(e) => setAvatar(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded"
+          placeholder="https://example.com/avatar.jpg"
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Cooking Experience</label>
+        <select
+          value={experience}
+          onChange={(e) => setExperience(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded"
+        >
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+          <option value="Professional">Professional</option>
+        </select>
+      </div>
+      
+      {/* Preferences Section - Directly under Cooking Experience */}
+      <h3 className="text-lg font-retro mb-2 text-maineBlue">Preferences</h3>
+      {/* Dietary Preferences - Single-Select Dropdown */}
+      <div className="mb-3">
+        <span className="block mb-1 font-semibold text-sm">Dietary</span>
+        <select
+          className="w-full p-2 border border-gray-300 rounded text-sm bg-weatheredWhite text-maineBlue"
+          value={dietary.length > 0 ? dietary[0] : ''}
+          onChange={(e) => {
+            setDietary(e.target.value ? [e.target.value] : []);
+          }}
+        >
+          <option value="">None</option>
+          {[
+            'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Pescatarian', 'Low-Carb', 'Keto', 'Paleo', 'Nut-Free', 'Halal', 'Kosher'
+          ].map(option => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Cuisine Preferences - Single-Select Dropdown */}
+      <div className="mb-3">
+        <span className="block mb-1 font-semibold text-sm">Cuisine</span>
+        <select
+          className="w-full p-2 border border-gray-300 rounded text-sm bg-weatheredWhite text-maineBlue"
+          value={cuisine.length > 0 ? cuisine[0] : ''}
+          onChange={(e) => {
+            setCuisine(e.target.value ? [e.target.value] : []);
+          }}
+        >
+          <option value="">None</option>
+          {[
+            'Italian', 'Thai', 'Seafood', 'Mexican', 'Japanese', 'Chinese', 'Indian', 'French', 'Greek', 'American', 'Spanish', 'Middle Eastern', 'Korean'
+          ].map(option => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Kitchen Setup - Single-Select Dropdown */}
+      <div className="mb-3">
+        <span className="block mb-1 font-semibold text-sm">Kitchen Setup</span>
+        <select
+          className="w-full p-2 border border-gray-300 rounded text-sm bg-weatheredWhite text-maineBlue"
+          value={kitchenSetup}
+          onChange={(e) => {
+            setKitchenSetup(e.target.value);
+          }}
+        >
+          {[
+            'Apartment Kitchen', 'Grilling Setup', 'Full Chef Station'
+          ].map(option => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex justify-end gap-2 mt-4">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+          onClick={onClose}
+        >
+          Cancel
+        </button>
+        <button
+          className={`px-4 py-2 bg-seafoam text-maineBlue rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors ${
+            isSaving ? 'opacity-70 cursor-not-allowed' : ''
+          }`}
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? 'Saving...' : 'Save'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function Modal({ open, onClose, children, className }: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className={`relative ${className || ''}`}>
+        <button
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+          onClick={onClose}
+        >
+          ✕
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function TermsModal({ open, onClose, content }: {
+  open: boolean;
+  onClose: () => void;
+  content: string;
+}) {
+  return (
+    <Modal open={open} onClose={onClose} className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded shadow-lg max-h-[80vh] overflow-auto">
+      <h2 className="text-2xl font-retro mb-4 text-maineBlue">Terms of Service</h2>
+      <div className="mb-4 text-gray-700 whitespace-pre-line">
+        {content}
+      </div>
+      <div className="flex justify-end">
+        <button
+          className="px-4 py-2 bg-seafoam text-maineBlue rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors"
+          onClick={onClose}
+        >
+          Close
+        </button>
+      </div>
+    </Modal>
+  );
+}
 
 export default Profile;
