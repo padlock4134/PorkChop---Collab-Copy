@@ -185,7 +185,33 @@ const LandingPage: React.FC = () => {
             Install App
           </button>
         </div>
-        <section className="flex flex-col items-center justify-center w-full" style={{ margin: '5rem 0 1rem' }}>
+        <div style={{ marginTop: '2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'center' }}>
+          <a
+            href="/kitchen_comebacks.html"
+            style={{
+              fontFamily: 'Bree Serif, serif',
+              fontSize: 'clamp(1rem, 3vw, 1.5rem)',
+              background: '#4CA89B', /* seafoam color */
+              color: '#fff',
+              padding: '0.6rem 1.5rem',
+              borderRadius: '1.4rem',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              boxShadow: '0 2px 12px #2a4d6922',
+              border: '2px solid #003366', /* maineBlue */
+              textDecoration: 'none',
+              transition: 'all 0.2s',
+              outline: 'none',
+              minWidth: '220px',
+              textAlign: 'center'
+            }}
+            onMouseOver={e => { e.currentTarget.style.background = '#003366'; e.currentTarget.style.color = '#fff'; }}
+            onMouseOut={e => { e.currentTarget.style.background = '#4CA89B'; e.currentTarget.style.color = '#fff'; }}
+          >
+            Kitchen Comebacks
+          </a>
+        </div>
+        <section className="flex flex-col items-center justify-center w-full" style={{ margin: '3rem 0 1rem' }}>
           <div className="cookbook-wrapper">
             <FlippableCookbook />
           </div>
