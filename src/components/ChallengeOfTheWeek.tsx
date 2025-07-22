@@ -5,7 +5,8 @@ import type { RecipeCard } from './RecipeMatcherModal';
 import { getWeeklyChallengeRecipe } from '../api/anthropicChallenge';
 import { getRecipeImage } from '../api/unsplash';
 import { supabase } from '../api/supabaseClient';
-import { getCurrentUserId } from '../api/userSession';
+import { isSessionValid } from '../api/userSession';
+import { useSupabase } from './SupabaseProvider';
 
 // Pool of weekly challenges
 export const WEEKLY_CHALLENGES = [
@@ -320,14 +321,16 @@ const ChallengeOfTheWeek: React.FC = () => {
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const { refreshXP } = useLevelProgressContext();
 
+  const { user } = useSupabase();
+
   // Fetch claim status for this user/week
   async function fetchClaimStatus() {
-    const userId = await getCurrentUserId();
-    if (!userId) return;
+    const sessionValid = await isSessionValid();
+    if (!sessionValid || !user) return;
     const { data } = await supabase
       .from('weekly_challenge_claims')
       .select('id')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('week_number', weekNumber)
       .maybeSingle();
     setAlreadyClaimed(!!data);

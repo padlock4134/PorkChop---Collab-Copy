@@ -1,12 +1,12 @@
 // Anthropic Claude Haiku API integration for Chef Freddie
 import { supabase } from './supabaseClient';
-import { getCurrentUserId } from './userSession';
+import { isSessionValid } from './userSession';
 
-export async function askChefFreddie(prompt: string): Promise<string> {
+export async function askChefFreddie(userId: string, prompt: string): Promise<string> {
   // --- Chat limit logic ---
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    return 'Error: User not found. Please sign in again.';
+  const isValid = await isSessionValid();
+  if (!userId || !isValid) {
+    return 'Error: User not authenticated. Please sign in again.';
   }
   const { data: profile, error } = await supabase
     .from('profiles')

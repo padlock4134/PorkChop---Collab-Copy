@@ -19,9 +19,14 @@ A cross-platform cooking app with a 1950s Maine Fish Market theme. Scan your pan
 
 ## Setup
 1. Clone the repo
-2. Run `npm install`
-3. Copy `.env.example` to `.env` and fill in your API keys
-4. Run `npm run dev` (app runs on [http://localhost:3000](http://localhost:3000) with hot reload)
+2. Copy `.env.example` to `.env` and fill in your API keys
+3. Ensure you have the Netlify CLI installed: `npm install -g netlify-cli`
+4. Run `npm install`
+5. Run `netlify dev`
+
+The React app runs on [http://localhost:3000](http://localhost:3000) (with hot reload), and all user interactions should happen here.
+
+The Netlify functions dev server runs on [http://localhost:8888](http://localhost:8888). Behind the scenes, Vite is configured to proxy all requests to `/.netlify/functions` to the dev server URL.
 
 ## Environment Variables
 See `.env.example` for required keys.

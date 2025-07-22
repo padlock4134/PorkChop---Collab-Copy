@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { XP_REWARDS } from '../services/xpService';
 import { useLevelProgressContext } from './NavBar';
 import { supabase } from '../api/supabaseClient';
+import { useSupabase } from './SupabaseProvider';
+import { isSessionValid } from '../api/userSession';
 
 interface VideoModalProps {
   open: boolean;
@@ -16,6 +18,8 @@ const VideoModal: React.FC<VideoModalProps> = ({ open, onClose, title, videoUrl,
   const [hasAwardedXP, setHasAwardedXP] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { refreshXP } = useLevelProgressContext();
+
+  const { user } = useSupabase();
   
   // Reset XP award state when modal opens/closes or tutorial changes
   useEffect(() => {
@@ -39,8 +43,8 @@ const VideoModal: React.FC<VideoModalProps> = ({ open, onClose, title, videoUrl,
     if (hasAwardedXP || !tutorialId) return;
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const sessionValid = await isSessionValid();
+      if (!sessionValid || !user) return;
       
       // Check if XP was already awarded for this tutorial
       const { data: existingLog } = await supabase

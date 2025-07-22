@@ -5,8 +5,11 @@ import "./LandingPage.css";
 import TermsModal from './TermsModal';
 import { useTermsModal } from './useTermsModal';
 import InstallPWAButton from "./InstallPWAButton";
-
 import FlippableCookbook from "./FlippableCookbook";
+
+const wristbandConsumerLoginUrl = (import.meta as any).env.VITE_WRISTBAND_CONSUMER_LOGIN_URL;
+const wristbandConsumerSignupUrl = (import.meta as any).env.VITE_WRISTBAND_CONSUMER_SIGNUP_URL;
+
 // Placeholder SVG for Freddie (replace with your vector when ready)
 const FreddieSVG = () => (
   <svg width="80" height="80" viewBox="0 0 80 80" aria-label="Grandpa Freddie" style={{marginBottom: '1rem'}}>
@@ -90,7 +93,7 @@ const LandingPage: React.FC = () => {
             }
           `}</style>
           <Link
-            to="/signin"
+            to={wristbandConsumerLoginUrl}
             style={{
               fontFamily: 'Bree Serif, serif',
               fontSize: 'clamp(1rem, 3vw, 1.5rem)',
@@ -116,7 +119,7 @@ const LandingPage: React.FC = () => {
             Log In
           </Link>
           <Link
-            to="/signup"
+            to={wristbandConsumerSignupUrl}
             style={{
               fontFamily: 'Bree Serif, serif',
               fontSize: 'clamp(1rem, 3vw, 1.5rem)',

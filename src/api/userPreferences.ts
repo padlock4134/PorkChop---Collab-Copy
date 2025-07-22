@@ -1,10 +1,10 @@
 import { supabase } from './supabaseClient';
 import { ExperienceLevel, UserPreferences, DEFAULT_EXPERIENCE_LEVEL } from '../types/userPreferences';
-import { getCurrentUserId } from './userSession';
+import { isSessionValid } from './userSession';
 
-export async function getUserPreferences(): Promise<UserPreferences> {
-  const userId = await getCurrentUserId();
-  if (!userId) {
+export async function getUserPreferences(userId: string): Promise<UserPreferences> {
+  const sessionValid = await isSessionValid();
+  if (!sessionValid || !userId) {
     return { experienceLevel: DEFAULT_EXPERIENCE_LEVEL };
   }
 
@@ -24,9 +24,9 @@ export async function getUserPreferences(): Promise<UserPreferences> {
   };
 }
 
-export async function updateExperienceLevel(level: ExperienceLevel): Promise<void> {
-  const userId = await getCurrentUserId();
-  if (!userId) {
+export async function updateExperienceLevel(userId: string, level: ExperienceLevel): Promise<void> {
+  const sessionValid = await isSessionValid();
+  if (!sessionValid || !userId) {
     console.error('No user logged in');
     return;
   }

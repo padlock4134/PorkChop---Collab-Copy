@@ -2,7 +2,7 @@ import { RecipeCard } from '../components/RecipeMatcherModal';
 import { ExperienceLevel, DEFAULT_EXPERIENCE_LEVEL } from '../types/userPreferences';
 import { getUserPreferences } from './userPreferences';
 import { supabase } from './supabaseClient';
-import { getCurrentUserId } from './userSession';
+import { isSessionValid } from './userSession';
 
 const ANTHROPIC_API_URL = '/.netlify/functions/anthropic-proxy';
 const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos';
@@ -37,9 +37,9 @@ const RECIPE_PROMPTS = {
     5. Include necessary equipment for each recipe`
 };
 
-async function getUserProfile() {
-  const userId = await getCurrentUserId();
-  if (!userId) return null;
+async function getUserProfile(userId) {
+  const sessionValid = await isSessionValid();
+  if (!sessionValid || !userId) return null;
 
   const { data, error } = await supabase
     .from('profiles')
@@ -55,11 +55,11 @@ async function getUserProfile() {
   return data;
 }
 
-export async function fetchRecipesWithImages(ingredients: string[], numRecipes = 5): Promise<RecipeCard[]> {
+export async function fetchRecipesWithImages(userId: string, ingredients: string[], numRecipes = 5): Promise<RecipeCard[]> {
   // 1. Get user preferences
   const [{ experienceLevel }, profile] = await Promise.all([
-    getUserPreferences(),
-    getUserProfile()
+    getUserPreferences(userId),
+    getUserProfile(userId)
   ]);
 
   const promptTemplate = RECIPE_PROMPTS[experienceLevel] || RECIPE_PROMPTS[DEFAULT_EXPERIENCE_LEVEL];
@@ -106,7 +106,7 @@ Return ONLY the JSON array, no other text.`;
   const anthropicData = await anthropicRes.json();
   if (!anthropicRes.ok) {
     console.error('Anthropic API error:', anthropicData);
-    return generateFallbackRecipes(ingredients, numRecipes);
+    return generateFallbackRecipes(userId, ingredients, numRecipes);
   }
 
   let recipes;
@@ -125,7 +125,7 @@ Return ONLY the JSON array, no other text.`;
   } catch (err) {
     console.error('Failed to parse recipes:', err);
     console.log('Raw content:', anthropicData.content[0].text);
-    return generateFallbackRecipes(ingredients, numRecipes);
+    return generateFallbackRecipes(userId, ingredients, numRecipes);
   }
 
   // 4. Fetch images for each recipe
@@ -153,8 +153,8 @@ Return ONLY the JSON array, no other text.`;
   }));
 }
 
-export async function generateFallbackRecipes(ingredients: string[], count: number): Promise<any[]> {
-  const { experienceLevel } = await getUserPreferences();
+export async function generateFallbackRecipes(userId: string, ingredients: string[], count: number): Promise<any[]> {
+  const { experienceLevel } = await getUserPreferences(userId);
   const promptTemplate = RECIPE_PROMPTS[experienceLevel] || RECIPE_PROMPTS[DEFAULT_EXPERIENCE_LEVEL];
   
   const prompt = `${promptTemplate(count, ingredients)}

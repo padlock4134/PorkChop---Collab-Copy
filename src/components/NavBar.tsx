@@ -7,6 +7,8 @@ import ChallengeOfTheWeek from './ChallengeOfTheWeek';
 import { getUserBadges, BADGES } from '../utils/badges';
 // @ts-ignore
 import logo from '../images/logo.png';
+import { useSupabase } from './SupabaseProvider';
+import { isSessionValid } from '../api/userSession';
 
 interface LevelProgress {
   title: string;
@@ -38,9 +40,11 @@ const useLevelProgress = (): [LevelProgress, () => void] => {
   });
   const fetchXpRef = useRef<() => Promise<void>>();
 
+  const { user } = useSupabase();
+
   const fetchXp = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const sessionValid = await isSessionValid()
+    if (!sessionValid || !user) return;
 
     const { data } = await supabase
       .from('user_xp')
@@ -105,12 +109,14 @@ const LevelBadge = () => {
 const LastBadge = () => {
   const [lastBadge, setLastBadge] = useState<{icon: string, name: string, description: string} | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const { user } = useSupabase();
   
   useEffect(() => {
     const fetchLastBadge = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const sessionValid = await isSessionValid()
+        if (!sessionValid || !user) {
           setLoading(false);
           return;
         }

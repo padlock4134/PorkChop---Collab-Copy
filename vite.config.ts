@@ -6,8 +6,21 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    open: true,
+    open: true, // Auto-launch in the browser when starting the server
     strictPort: true,
+    proxy: {
+      '/.netlify/functions': {
+        target: 'http://localhost:8888',
+        changeOrigin: true,
+        secure: false,
+        // Optional: Add logging to see what's being proxied
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log(`[Proxy] ${req.method} ${req.url} -> ${options.target}${req.url}`);
+          });
+        }
+      }
+    }
   },
   build: {
     target: 'esnext',

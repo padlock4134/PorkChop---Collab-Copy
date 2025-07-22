@@ -1,8 +1,19 @@
-// Helper to get the current signed-in user's ID from Supabase
-import { supabase } from './supabaseClient';
+import { netlifyApiClient } from "../client/netlify-api-client";
 
-export async function getCurrentUserId(): Promise<string | null> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) return null;
-  return data.user.id;
+// Checks the get-session endpoint in Netlify to ensure the user's session cookie still exists
+export async function isSessionValid(): Promise<boolean> {
+  try {
+    const response = await netlifyApiClient.get('/auth-session');
+
+    if (response.status !== 200) {
+      // Non-200 response - session invalid
+      return false;
+    }
+
+    // Session is valid, throw away the response
+    return true;
+  } catch (error) {
+    console.error('Session check failed:', error);
+    return false;
+  }
 }

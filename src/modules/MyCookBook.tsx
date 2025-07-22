@@ -6,6 +6,8 @@ import { fetchCookbook, removeRecipeFromCookbook } from './cookbookSupabase';
 import { supabase } from '../api/supabaseClient';
 import { XP_REWARDS } from '../services/xpService';
 import { useLevelProgressContext } from '../components/NavBar';
+import { useSupabase } from '../components/SupabaseProvider';
+import { isSessionValid } from '../api/userSession';
 
 // Chef quotes (production-ready)
 const chefQuotes = [
@@ -63,6 +65,8 @@ const MyCookBook = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [showShareModal, setShowShareModal] = useState(false);
   const [recipeToShare, setRecipeToShare] = useState<Recipe | null>(null);
+
+  const { user } = useSupabase();
 
   // Load recipes and set page context on mount
   const { updateContext } = useFreddieContext();
@@ -125,8 +129,8 @@ const MyCookBook = () => {
 
       if (shared) {
         // Award XP for sharing
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        const sessionValid = await isSessionValid();
+        if (sessionValid && user) {
           const today = new Date().toISOString().split('T')[0];
           const { data: existingLog } = await supabase
             .from('xp_logs')
@@ -170,7 +174,7 @@ const MyCookBook = () => {
     const loadRecipes = async () => {
       try {
         setLoading(true);
-        const savedRecipes = await fetchCookbook();
+        const savedRecipes = await fetchCookbook(user?.id!);
         const converted = savedRecipes.map(r => ({
           id: r.id,
           name: r.title,
@@ -468,7 +472,7 @@ const MyCookBook = () => {
                     onClick={async () => {
                       try {
                         const recipeId = recipe.id;
-                        await removeRecipeFromCookbook(recipeId);
+                        await removeRecipeFromCookbook(user?.id!, recipeId);
                         setLocalRecipes(recipes.filter(r => r.id !== recipeId));
                       } catch (err) {
                         console.error('Error deleting recipe:', err);

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { saveKitchen, fetchKitchen } from './kitchenSupabase';
 import { fetchCookbook, addRecipeToCookbook } from './cookbookSupabase';
-import { Ingredient } from '../types';
+import { Ingredient } from '../types/shared-types';
 import { XP_REWARDS } from '../services/xpService';
 import { useLevelProgressContext } from '../components/NavBar';
 
 import { scanImage } from '../api/vision';
 import RecipeMatcherModal, { RecipeCard } from '../components/RecipeMatcherModal';
-
-
+import { useFreddieContext } from '../components/FreddieContext';
+import { useSupabase } from '../components/SupabaseProvider';
+import { isSessionValid } from '../api/userSession';
 
 const CATEGORIES = [
   "Vegetable",
@@ -22,9 +23,6 @@ const CATEGORIES = [
   "Frozen",
   "Other"
 ];
-
-
-import { useFreddieContext } from '../components/FreddieContext';
 
 // Categorize ingredient names to best-fit category
 function categorizeIngredient(name: string): string {
@@ -79,6 +77,8 @@ const MyKitchen = () => {
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [filterText, setFilterText] = useState('');
 
+  const { user } = useSupabase();
+
   const addIngredient = () => {
     if (input.trim()) {
       setIngredients(prev => [...prev, { name: input.trim(), category }]);
@@ -89,7 +89,7 @@ const MyKitchen = () => {
   // Save kitchen to Supabase whenever ingredients change
   useEffect(() => {
     if (ingredients.length === 0) return;
-    saveKitchen(ingredients).catch(err => setKitchenError('Failed to save your kitchen.'));
+    saveKitchen(user?.id!, ingredients).catch(err => setKitchenError('Failed to save your kitchen.'));
   }, [ingredients]);
 
   // Freddie context: set page on mount
@@ -100,8 +100,8 @@ const MyKitchen = () => {
     const loadData = async () => {
       try {
         const [kitchenIngredients, cookbookRecipes] = await Promise.all([
-          fetchKitchen(),
-          fetchCookbook()
+          fetchKitchen(user?.id!),
+          fetchCookbook(user?.id!)
         ]);
         setIngredients(kitchenIngredients);
         setCookbook(cookbookRecipes);
@@ -179,9 +179,9 @@ const MyKitchen = () => {
                   } else {
                     // Check user before saving
                     try {
-                      const userRes = await import('../api/supabaseClient').then(m => m.supabase.auth.getUser());
-                      console.log('Current user:', userRes?.data?.user);
-                      if (!userRes?.data?.user) {
+                      const sessionValid = await isSessionValid();
+                      console.log('Current user:', user);
+                      if (!sessionValid || !user) {
                         setScanStatus('You are not signed in. Please sign in to save your kitchen.');
                         alert('You are not signed in. Please sign in to save your kitchen.');
                         setScanLoading(false);
@@ -200,7 +200,7 @@ const MyKitchen = () => {
                     ];
                     setIngredients(updatedIngredients);
                     try {
-                      await saveKitchen(updatedIngredients);
+                      await saveKitchen(user?.id!, updatedIngredients);
                       setKitchenError(null);
                       setScanStatus('Scanned ingredients saved to your kitchen!');
                       alert('Scanned ingredients saved to your kitchen!');
@@ -240,7 +240,7 @@ const MyKitchen = () => {
             try {
               const cupboardNames = ingredients.map(i => i.name);
               const { fetchRecipesWithImages } = await import('../api/recipeMatcher');
-              const recipes = await fetchRecipesWithImages(cupboardNames, 5);
+              const recipes = await fetchRecipesWithImages(user?.id!, cupboardNames, 5);
               setMatcherRecipes(recipes);
             } catch (err: any) {
               setMatcherError('Failed to fetch recipes.');
@@ -278,12 +278,11 @@ const MyKitchen = () => {
         cupboardIngredients={ingredients.map(i => i.name)}
         onLike={async recipe => {
           try {
-            await addRecipeToCookbook(recipe);
-            const updatedCookbook = await fetchCookbook();
+            await addRecipeToCookbook(user?.id!, recipe);
+            const updatedCookbook = await fetchCookbook(user?.id!);
             setCookbook(updatedCookbook);
             
             // Award XP for saving a recipe
-            const { data: { user } } = await import('../api/supabaseClient').then(m => m.supabase.auth.getUser());
             if (user) {
               await import('../services/xpService').then(m => 
                 m.awardXP(user.id, XP_REWARDS.RECIPE_SAVE, 'recipe_save')

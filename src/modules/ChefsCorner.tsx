@@ -7,10 +7,13 @@ import CookBookImportModal from '../components/CookBookImportModal';
 import MarketDirectory from '../components/MarketDirectory';
 import { useRecipeContext } from '../components/RecipeContext';
 import { fetchCookbook } from './cookbookSupabase';
+import { useSupabase } from '../components/SupabaseProvider';
 
 const ChefsCorner = () => {
   const { updateContext } = useFreddieContext();
   const { setRecipes } = useRecipeContext();
+
+  const { user } = useSupabase();
   
   useEffect(() => {
     updateContext({ page: 'ChefsCorner' });
@@ -18,7 +21,7 @@ const ChefsCorner = () => {
     // Load recipes from cookbook when Chef's Corner loads
     const loadRecipes = async () => {
       try {
-        const savedRecipes = await fetchCookbook();
+        const savedRecipes = await fetchCookbook(user?.id!);
         setRecipes(savedRecipes);
       } catch (err) {
         console.error('Error loading cookbook recipes:', err);
@@ -42,7 +45,7 @@ const ChefsCorner = () => {
   // Handler for modal import - only add ingredients not in kitchen
   const handleCookBookImport = async (ingredientNames: string[]) => {
     try {
-      const kitchenIngredients = await fetchKitchen();
+      const kitchenIngredients = await fetchKitchen(user?.id!);
       let kitchenNames: string[] = [];
       if (Array.isArray(kitchenIngredients) && kitchenIngredients.length > 0) {
         if (kitchenIngredients.every(i => typeof i === 'string')) {

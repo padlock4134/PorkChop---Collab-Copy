@@ -18,8 +18,8 @@ export const awardXP = async (userId: string, xpAmount: number, action: string) 
   try {
     // First try the RPC function (if it exists)
     const { error: rpcError } = await supabase.rpc('increment_user_xp', {
-      user_id: userId,
-      xp_amount: xpAmount
+      p_user_id: userId,
+      p_xp_amount: xpAmount  
     }).single();
 
     // If RPC fails, fall back to direct update
