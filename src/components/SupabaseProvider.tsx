@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { useWristbandAuth, useWristbandSession } from '@wristband/react-client-auth';
 
@@ -7,7 +8,7 @@ import { XP_REWARDS } from '../services/xpService';
 import { supabase } from '../api/supabaseClient';
 import { WristbandSessionMetadata } from '../types/session-types';
 import { verifySubscription } from '../api/userSubscription';
-import { useNavigate } from 'react-router-dom';
+import { isAdminRole } from '../utils/auth';
 
 // Define the shape of our Supabase context
 interface SupabaseContextType {
@@ -45,7 +46,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children, de
     tenantId: wristbandTenantId,
     metadata
   } = useWristbandSession<WristbandSessionMetadata>();
-  const { email: wristbandEmail } = metadata;
+  const { email: wristbandEmail, role } = metadata;
 
   useEffect(() => {
     const getSupabaseUser = async () => {
@@ -60,16 +61,19 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children, de
         // to display the payment modal while keeping them logged in still.
         setUser(user);
 
-        // Now check if we need to display payment modal before giving them app access
-        const subscriptionVerification = await verifySubscription(user.id);
-        if (!subscriptionVerification?.isPaid && !devOnlyPaymentBypass) {
-          //
-          // TODO: The SubscriptionVerification contains the subscription entity from Supabase.
-          //       You could look at the subscription status field to potentially show
-          //       different UI beyond just the Choose Plan modal.
-          //
-          setIsPaid(false);
-          return;
+        // Now check if we need to display payment modal before giving them app access.
+        // Admins get to skip this for full access.
+        if (!isAdminRole(role.name)) {
+          const subscriptionVerification = await verifySubscription(user.id);
+          if (!subscriptionVerification?.isPaid && !devOnlyPaymentBypass) {
+            //
+            // TODO: The SubscriptionVerification contains the subscription entity from Supabase.
+            //       You could look at the subscription status field to potentially show
+            //       different UI beyond just the Choose Plan modal.
+            //
+            setIsPaid(false);
+            return;
+          }
         }
         setIsPaid(true);
 
