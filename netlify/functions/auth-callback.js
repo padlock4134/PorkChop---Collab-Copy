@@ -127,6 +127,7 @@ exports.handler = async (event) => {
       ...(tenantCustomDomainParam && { tenantCustomDomain: tenantCustomDomainParam }),
       ...(customState && { customState }),
       csrfToken,
+      role: userinfo.roles ? userinfo.roles[0] : {},
       // This token will be used in React when the browser needs to make requests to Supabase.
       supabaseToken: createSupabaseJwt(userinfo.sub, userinfo.tnt_id)
     };

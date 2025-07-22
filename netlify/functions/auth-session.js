@@ -13,7 +13,7 @@ exports.handler = async (event) => {
   try {
     // Get session from cookie
     const session = await getSessionFromCookie(event);
-    const { csrfToken, tenantId, userId, supabaseToken, email } = session;
+    const { csrfToken, tenantId, userId, supabaseToken, email, role } = session;
     
     // Validate API is protected
     if (!isSessionValid(session)) {
@@ -33,7 +33,7 @@ exports.handler = async (event) => {
     const { omit_data: omitData } = query;
     const sessionData = omitData === 'true' ? {} : {
       // Response strucutre matters here!! Any additional fields go in "metadata".
-      userId, tenantId, metadata: { supabaseToken, email }
+      userId, tenantId, metadata: { supabaseToken, email, role }
     };
 
     return createOkResponseWithBody(JSON.stringify(sessionData), [touchedSessionCookie, touchedCsrfCookie], true);
