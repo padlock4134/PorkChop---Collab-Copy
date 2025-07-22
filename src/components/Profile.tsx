@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { redirectToLogout } from '@wristband/react-client-auth';
+
 import { supabase } from '../api/supabaseClient';
+import { useSupabase } from '../components/SupabaseProvider';
 import PaymentModal from './PaymentModal';
+import { isSessionValid } from '../api/userSession';
 
 // Define a simple hook for TermsModal since the original import is incorrect
 function useTermsModal() {
@@ -26,7 +29,7 @@ type UserProfile = {
 };
 
 const Profile = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showEdit, setShowEdit] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTalents, setShowTalents] = useState(true);
@@ -37,6 +40,8 @@ const Profile = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const { user } = useSupabase();
 
   const { modalOpen: termsModalOpen, setModalOpen: setTermsModalOpen, termsContent } = useTermsModal();
 
@@ -61,19 +66,8 @@ const Profile = () => {
     ],
   };
 
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        alert('Error signing out: ' + error.message);
-        return;
-      }
-      navigate('/signin');
-    } catch (err) {
-      alert('Unexpected error signing out.');
-    }
+  const handleLogout = async () => {
+    redirectToLogout('/.netlify/functions/auth-logout');
   };
 
   const handleUnlock = (tree: string, talent: string, cost: number) => {
@@ -88,15 +82,15 @@ const Profile = () => {
       setLoading(true);
       setError('');
       try {
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        if (authError || !authUser) {
-          setError('You must be signed in to view your profile.');
+        const sessionValid = await isSessionValid();
+        if (!sessionValid) {
+          setError('Not authenticated. Please sign in again.');
           setLoading(false);
           return;
         }
 
         const [profileResponse] = await Promise.all([
-          supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+          supabase.from('profiles').select('*').eq('id', user?.id).single(),
         ]);
 
         if (profileResponse.error) {
@@ -113,7 +107,7 @@ const Profile = () => {
         }
 
         const xp = profile.xp || 0;
-        setUser({
+        setUserProfile({
           ...profile,
           name: profile.name || 'User',
           xp
@@ -134,24 +128,32 @@ const Profile = () => {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      const points = Math.floor(user.xp / 100);
+    if (userProfile) {
+      const points = Math.floor(userProfile.xp / 100);
       setTalentPoints(points);
       // Mock active talents for now (in real implementation, fetch from backend)
-      if (user.xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
-      if (user.xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
+      if (userProfile.xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
+      if (userProfile.xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
     }
-  }, [user]);
+  }, [userProfile]);
 
   useEffect(() => {
-    if (user && user.kitchenSetup) {
-      setKitchenSetup(user.kitchenSetup);
+    if (userProfile && userProfile.kitchenSetup) {
+      setKitchenSetup(userProfile.kitchenSetup);
     }
-  }, [user]);
+  }, [userProfile]);
 
-  if (loading) return <div className="text-center mt-10">Loading profile...</div>;
-  if (error) return <div className="text-center mt-10 text-red-600">{error}</div>;
-  if (!user) return null;
+  if (loading) {
+    return <div className="text-center mt-10">Loading profile...</div>;
+  } 
+
+  if (error) {
+    return <div className="text-center mt-10 text-red-600">{error}</div>;
+  } 
+
+  if (!userProfile) {
+    return null;
+  } 
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded-lg shadow-lg">
@@ -163,16 +165,16 @@ const Profile = () => {
       {/* User Details - Condensed and Centered */}
       <div className="mb-6 flex flex-col items-center gap-4 text-center">
         <div className="w-24 h-24 bg-maineBlue rounded-full flex items-center justify-center text-seafoam font-bold text-2xl overflow-hidden shrink-0">
-          {user.avatar ? (
-            <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+          {userProfile.avatar ? (
+            <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
-            <span>{user.name.slice(0, 2).toUpperCase()}</span>
+            <span>{userProfile.name.slice(0, 2).toUpperCase()}</span>
           )}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-maineBlue mb-2">{user.name}</h2>
-          <div className="text-base text-gray-600 mb-1">XP: {user.xp} | Talent Points: {talentPoints}</div>
-          <div className="text-base text-gray-600">Experience: {user.experience}</div>
+          <h2 className="text-xl font-bold text-maineBlue mb-2">{userProfile.name}</h2>
+          <div className="text-base text-gray-600 mb-1">XP: {userProfile.xp} | Talent Points: {talentPoints}</div>
+          <div className="text-base text-gray-600">Experience: {userProfile.experience}</div>
         </div>
       </div>
 
@@ -270,10 +272,7 @@ const Profile = () => {
         </button>
         <button
           className="bg-lobsterRed text-weatheredWhite px-3 py-1 rounded font-bold hover:bg-red-700 transition-colors text-sm"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            window.location.href = '/login';
-          }}
+          onClick={async () => handleLogout()}
         >
           Sign Out
         </button>
@@ -287,9 +286,9 @@ const Profile = () => {
         <EditProfileModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          user={user}
-          onProfileUpdated={(updatedUser) => {
-            setUser(updatedUser);
+          user={userProfile}
+          onProfileUpdated={(updatedUserProfile) => {
+            setUserProfile(updatedUserProfile);
             setModalOpen(false);
           }}
         />

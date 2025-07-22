@@ -9,6 +9,7 @@
 [dev]
   framework = "vite"
   targetPort = 3000
+  autoLaunch = false
 
 # Fix for the root URL to bypass asset handling
 [[redirects]]

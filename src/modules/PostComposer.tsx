@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { XP_REWARDS } from '../services/xpService';
 import { useLevelProgressContext } from '../components/NavBar';
+import { useSupabase } from '../components/SupabaseProvider';
+import { isSessionValid } from '../api/userSession';
 
 const PostComposer = () => {
   const [input, setInput] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { refreshXP } = useLevelProgressContext();
+
+  const { user } = useSupabase();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,8 +20,10 @@ const PostComposer = () => {
     setIsSubmitting(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const sessionValid = await isSessionValid();
+      if (!sessionValid || !user) {
+        throw new Error('Not authenticated');
+      }
       
       // Check if this is a recipe share (simplified check for recipe keywords)
       const isRecipeShare = /recipe|ingredients?|instructions?|method|steps|serves|prep time|cook time/i.test(input);

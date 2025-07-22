@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_VISION_API_KEY: string;
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_ANON_KEY: string;
+  readonly VITE_WRISTBAND_CONSUMER_SIGNUP_URL: string;
+  readonly VITE_WRISTBAND_CONSUMER_LOGIN_URL: string;
   // add more custom env vars here as needed
 }
 

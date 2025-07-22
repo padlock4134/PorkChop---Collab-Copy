@@ -35,7 +35,7 @@ const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ open, onSelectP
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full relative">
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+          className="absolute text-3xl top-2 right-4 text-gray-400 hover:text-gray-600"
           aria-label="Close"
         >
           ×

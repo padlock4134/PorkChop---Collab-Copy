@@ -1,16 +1,16 @@
 import { useCallback } from 'react';
 import { useLevelProgressContext } from '../components/NavBar';
 import { awardXP } from '../services/xpService';
-import { supabase } from '../api/supabaseClient';
+import { isSessionValid } from '../api/userSession';
 
-export const useXP = () => {
+export const useXP = (userId: string) => {
   const { refreshXP } = useLevelProgressContext();
 
   const awardXPWithRefresh = useCallback(async (xpAmount: number, action: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
+    const sessionValid = await isSessionValid();
+    if (!sessionValid || !userId) return false;
     
-    const success = await awardXP(user.id, xpAmount, action);
+    const success = await awardXP(userId, xpAmount, action);
     if (success) {
       refreshXP();
     }

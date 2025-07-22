@@ -3,9 +3,10 @@ import type { RecipeCard } from './RecipeMatcherModal';
 import { useState, useRef } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { claimWeeklyChallenge } from '../api/weeklyChallenge';
-import { getCurrentUserId } from '../api/userSession';
+import { isSessionValid } from '../api/userSession';
 import { XP_REWARDS } from '../services/xpService';
 import { useLevelProgressContext } from './NavBar';
+import { useSupabase } from './SupabaseProvider';
 
 interface WeeklyChallengeRecipeModalProps {
   open: boolean;
@@ -31,6 +32,8 @@ const WeeklyChallengeRecipeModal: React.FC<WeeklyChallengeRecipeModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { refreshXP } = useLevelProgressContext();
 
+  const { user } = useSupabase();
+
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -51,11 +54,11 @@ const WeeklyChallengeRecipeModal: React.FC<WeeklyChallengeRecipeModalProps> = ({
       return null;
     }
 
-    const userId = await getCurrentUserId();
-    if (!userId) throw new Error('Not signed in');
+    const sessionValid = await isSessionValid();
+    if (!sessionValid || !user?.id) throw new Error('Not signed in');
 
     const fileExt = proofPhoto.name.split('.').pop();
-    const fileName = `${userId}-week${weekNumber}-${Date.now()}.${fileExt}`;
+    const fileName = `${user?.id}-week${weekNumber}-${Date.now()}.${fileExt}`;
     
     const { data, error } = await supabase.storage
       .from('challenge-proofs')
@@ -75,8 +78,8 @@ const WeeklyChallengeRecipeModal: React.FC<WeeklyChallengeRecipeModalProps> = ({
     setUploadError(null);
 
     try {
-      const userId = await getCurrentUserId();
-      if (!userId) throw new Error('Not signed in');
+      const sessionValid = await isSessionValid();
+      if (!sessionValid || !user?.id) throw new Error('Not signed in');
 
       // First upload the proof photo
       const photoPath = await uploadProofPhoto();
@@ -84,7 +87,7 @@ const WeeklyChallengeRecipeModal: React.FC<WeeklyChallengeRecipeModalProps> = ({
 
       // Then claim the challenge with the photo proof
       const result = await claimWeeklyChallenge({
-        userId,
+        userId: user?.id,
         challengeId: challengeId || recipe?.id || '',
         weekNumber: weekNumber || 0,
         xp: xp || 0,
@@ -97,10 +100,10 @@ const WeeklyChallengeRecipeModal: React.FC<WeeklyChallengeRecipeModalProps> = ({
       } else {
         setClaimed(true);
         // Award XP for completing the challenge
-        const userId = await getCurrentUserId();
-        if (userId) {
+        const sessionValid = await isSessionValid();
+        if (sessionValid && user.id) {
           await import('../services/xpService').then(m => 
-            m.awardXP(userId, XP_REWARDS.CHALLENGE_COMPLETE, 'challenge_complete')
+            m.awardXP(user.id, XP_REWARDS.CHALLENGE_COMPLETE, 'challenge_complete')
           );
           refreshXP();
         }

@@ -1,23 +1,26 @@
 import React from 'react';
+import { createStripeCheckoutSession } from '../api/userSubscription';
 
 interface PaymentModalProps {
   open: boolean;
   onClose: () => void;
-  onDevBypass?: () => void;
-  plan?: 'monthly' | 'yearly';
-  email?: string;
+  plan: 'monthly' | 'yearly';
+  userId: string;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onDevBypass, plan, email }) => {
-  const handleStripeCheckout = (e?: React.MouseEvent | React.FormEvent) => {
+const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, plan, userId }) => {
+  const handleStripeCheckout = async (e?: React.MouseEvent | React.FormEvent) => {
     if (e) e.preventDefault();
     
-    // Redirect to the appropriate payment link based on the selected plan
-    if (plan === 'yearly') {
-      window.location.href = 'https://buy.stripe.com/dRmeVddkU19lcT2fohfUQ03'; // Yearly plan - $99/year
-    } else {
-      window.location.href = 'https://buy.stripe.com/aFa9AT3Kk9FR4mw4JDfUQ02'; // Monthly plan - $10.99/month
-    }
+    // Redirect to the checkout link based on the selected plan
+    const checkoutUrl = await createStripeCheckoutSession(userId, plan);
+    window.location.href = checkoutUrl;
+
+    // if (plan === 'yearly') {
+    //   window.location.href = 'https://buy.stripe.com/dRmeVddkU19lcT2fohfUQ03'; // Yearly plan - $99/year
+    // } else {
+    //   window.location.href = 'https://buy.stripe.com/aFa9AT3Kk9FR4mw4JDfUQ02'; // Monthly plan - $10.99/month
+    // }
   };
   
   if (!open) return null;
@@ -27,7 +30,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onDevBypass,
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full relative">
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+          className="absolute text-3xl top-2 right-4 text-gray-400 hover:text-gray-600"
           aria-label="Close"
         >
           ×
@@ -56,16 +59,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onDevBypass,
         <p className="mt-4 text-xs text-gray-500 text-center">
           Payments are securely processed by Stripe. You'll be redirected to your dashboard after payment.
         </p>
-        
-        {/* Development bypass button - only shown in development */}
-        {process.env.NODE_ENV === 'development' && onDevBypass && (
-          <button 
-            onClick={onDevBypass}
-            className="mt-4 text-xs text-gray-400 hover:text-gray-600 w-full text-center"
-          >
-            [DEV] Skip Payment
-          </button>
-        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import chefFreddiePng from '../images/logo.png';
 import { useFreddieContext } from './FreddieContext';
 import { askChefFreddie } from '../api/chefFreddie';
+import { useSupabase } from './SupabaseProvider';
 
 interface Message {
   sender: 'freddie' | 'user';
@@ -32,11 +33,13 @@ const ChefFreddieWidget = () => {
   const [lastPage, setLastPage] = useState<string | undefined>();
   const [input, setInput] = useState('');
 
+  const { user } = useSupabase();
+
   const sendUserMessage = async (text: string) => {
     setMessages(msgs => [...msgs, { sender: 'user', text }]);
     setInput('');
     try {
-      const reply = await askChefFreddie(text);
+      const reply = await askChefFreddie(user?.id!, text);
       setMessages(msgs => [...msgs, { sender: 'freddie', text: reply }]);
     } catch (err: any) {
       setMessages(msgs => [...msgs, { sender: 'freddie', text: err.message || 'Error contacting Chef Freddie.' }]);
