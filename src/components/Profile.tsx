@@ -174,141 +174,140 @@ const Profile = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded-lg shadow-lg">
-      {/* Header: Avatar on left, My Profile and username on right */}
-      <div className="flex items-center mb-6 gap-6">
-        <div className="w-24 h-24 bg-maineBlue rounded-full flex items-center justify-center text-seafoam font-bold text-2xl overflow-hidden shrink-0">
+      {/* Header: My Profile | User Name */}
+      <div className="flex flex-col items-center mb-6">
+        <h1 className="text-3xl font-retro text-maineBlue mb-1">My Profile <span className="text-xl font-normal text-gray-500">|</span> <span className="text-xl font-bold text-maineBlue">{userProfile.name}</span></h1>
+        {subscription && (
+          <span className={`px-2 py-0.5 text-xs rounded-full mt-2 ${
+            subscription.plan === 'yearly'
+              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+              : 'bg-blue-100 text-blue-800 border border-blue-300'
+          }`}>
+            {subscription.plan === 'yearly' ? 'Yearly' : 'Monthly'}
+          </span>
+        )}
+      </div>
+      {/* Avatar and Details Row */}
+      <div className="flex items-start gap-8 mb-6">
+        <div className="w-24 h-24 bg-maineBlue rounded-full flex items-center justify-center text-seafoam font-bold text-2xl overflow-hidden shrink-0 mt-2">
           {userProfile.avatar ? (
             <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
             <span>{userProfile.name.slice(0, 2).toUpperCase()}</span>
           )}
         </div>
-        <div className="flex flex-col justify-center">
-          <h1 className="text-3xl font-retro text-maineBlue mb-1">My Profile</h1>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-maineBlue">{userProfile.name}</h2>
-            {subscription && (
-              <span className={`px-2 py-0.5 text-xs rounded-full ${
-                subscription.plan === 'yearly'
-                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                  : 'bg-blue-100 text-blue-800 border border-blue-300'
-              }`}>
-                {subscription.plan === 'yearly' ? 'Yearly' : 'Monthly'}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <h2 className="text-lg font-retro mb-2 text-center">My Culinary Journey</h2>
-      {/* Active Talents and Talent Trees - Compact and Centered Buttons */}
-      <div className="mb-4">
-        <div className="flex flex-wrap justify-center gap-1.5 mb-1.5">
-          {activeTalents.length > 0 &&
-            activeTalents.slice(0, 3).map(talent => (
-              <span
-                key={talent}
-                className="px-2 py-0.5 rounded-full border font-bold text-xs bg-maineBlue text-seafoam border-maineBlue"
-              >
-                {talent}
-              </span>
-            ))}
-          {activeTalents.length > 3 && (
-            <span className="px-2 py-0.5 rounded-full border font-bold text-xs text-gray-500">+{activeTalents.length - 3} more</span>
-          )}
-        </div>
-        <div className="flex justify-center gap-2">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <span className="font-semibold text-xs">Show Talents</span>
-            <span className="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-              <input
-                type="checkbox"
-                checked={showTalents}
-                onChange={() => setShowTalents(val => !val)}
-                className="sr-only peer"
-                id="talent-toggle"
-              />
-              <span
-                className="block w-10 h-6 bg-gray-300 rounded-full shadow-inner peer-checked:bg-maineBlue transition-colors duration-200"
-              ></span>
-              <span
-                className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 peer-checked:translate-x-4 shadow"
-              ></span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      {/* Talent Trees Collapsible Panel - Condensed */}
-      {showTalents && (
-        <div className="space-y-2">
-          <div className="flex gap-2 justify-center flex-wrap">
-            {Object.entries(talentTrees).map(([tree, talents]) => (
-              <button
-                key={tree}
-                className={`px-3 py-1 rounded text-sm font-bold transition-colors ${
-                  activeTab === tree ? 'bg-maineBlue text-seafoam' : 'bg-seafoam text-maineBlue hover:bg-maineBlue hover:text-seafoam'
-                }`}
-                onClick={() => setActiveTab(tree)}
-              >
-                {tree}
-              </button>
-            ))}
-          </div>
-          {Object.entries(talentTrees).map(([tree, talents]) => (
-            <div
-              key={tree}
-              className={`bg-gray-100 p-3 rounded-lg border border-gray-200 ${
-                activeTab === tree ? 'block' : 'hidden'
-              }`}
-            >
-              <h3 className="text-lg font-bold mb-2 text-maineBlue">{tree}</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {talents.map(talent => (
-                  <div
-                    key={talent.name}
-                    className={`p-2 rounded border text-xs cursor-pointer transition-colors ${
-                      talent.active
-                        ? 'bg-maineBlue text-seafoam border-maineBlue'
-                        : talent.cost <= talentPoints
-                        ? 'bg-seafoam text-maineBlue border-seafoam hover:bg-maineBlue hover:text-seafoam'
-                        : 'bg-gray-200 text-gray-500 border-gray-200'
-                    }`}
-                    onClick={() => handleUnlock(tree, talent.name, talent.cost)}
+        <div className="flex-1">
+          <h2 className="text-lg font-retro mb-2 text-center">My Culinary Journey</h2>
+          {/* Active Talents and Talent Trees - Compact and Centered Buttons */}
+          <div className="mb-4">
+            <div className="flex flex-wrap justify-center gap-1.5 mb-1.5">
+              {activeTalents.length > 0 &&
+                activeTalents.slice(0, 3).map(talent => (
+                  <span
+                    key={talent}
+                    className="px-2 py-0.5 rounded-full border font-bold text-xs bg-maineBlue text-seafoam border-maineBlue"
                   >
-                    <div className="font-bold mb-0.5">{talent.name}</div>
-                    <div className="text-[11px] opacity-90">{talent.description}</div>
-                    <div className="text-[11px]">Cost: {talent.cost} 🧑‍🍳</div>
-                  </div>
+                    {talent}
+                  </span>
+                ))}
+              {activeTalents.length > 3 && (
+                <span className="px-2 py-0.5 rounded-full border font-bold text-xs text-gray-500">+{activeTalents.length - 3} more</span>
+              )}
+            </div>
+            <div className="flex justify-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <span className="font-semibold text-xs">Show Talents</span>
+                <span className="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                  <input
+                    type="checkbox"
+                    checked={showTalents}
+                    onChange={() => setShowTalents(val => !val)}
+                    className="sr-only peer"
+                    id="talent-toggle"
+                  />
+                  <span
+                    className="block w-10 h-6 bg-gray-300 rounded-full shadow-inner peer-checked:bg-maineBlue transition-colors duration-200"
+                  ></span>
+                  <span
+                    className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 peer-checked:translate-x-4 shadow"
+                  ></span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Talent Trees Collapsible Panel - Condensed */}
+          {showTalents && (
+            <div className="space-y-2">
+              <div className="flex gap-2 justify-center flex-wrap">
+                {Object.entries(talentTrees).map(([tree, talents]) => (
+                  <button
+                    key={tree}
+                    className={`px-3 py-1 rounded text-sm font-bold transition-colors ${
+                      activeTab === tree ? 'bg-maineBlue text-seafoam' : 'bg-seafoam text-maineBlue hover:bg-maineBlue hover:text-seafoam'
+                    }`}
+                    onClick={() => setActiveTab(tree)}
+                  >
+                    {tree}
+                  </button>
                 ))}
               </div>
+              {Object.entries(talentTrees).map(([tree, talents]) => (
+                <div
+                  key={tree}
+                  className={`bg-gray-100 p-3 rounded-lg border border-gray-200 ${
+                    activeTab === tree ? 'block' : 'hidden'
+                  }`}
+                >
+                  <h3 className="text-lg font-bold mb-2 text-maineBlue">{tree}</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {talents.map(talent => (
+                      <div
+                        key={talent.name}
+                        className={`p-2 rounded border text-xs cursor-pointer transition-colors ${
+                          talent.active
+                            ? 'bg-maineBlue text-seafoam border-maineBlue'
+                            : talent.cost <= talentPoints
+                            ? 'bg-seafoam text-maineBlue border-seafoam hover:bg-maineBlue hover:text-seafoam'
+                            : 'bg-gray-200 text-gray-500 border-gray-200'
+                        }`}
+                        onClick={() => handleUnlock(tree, talent.name, talent.cost)}
+                      >
+                        <div className="font-bold mb-0.5">{talent.name}</div>
+                        <div className="text-[11px] opacity-90">{talent.description}</div>
+                        <div className="text-[11px]">Cost: {talent.cost} 🧑‍🍳</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      <div className="mt-8 flex flex-col gap-2 items-center">
-        <button
-          className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
-          onClick={() => setModalOpen(true)}
-        >
-          Edit Profile
-        </button>
-        <button
-          className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
-          onClick={() => setShowUpgradeModal(true)}
-        >
-          Manage Subscription
-        </button>
-        <button
-          className="bg-lobsterRed text-weatheredWhite px-6 py-2 w-60 rounded font-bold hover:bg-red-700 transition-colors text-sm shadow"
-          onClick={async () => handleLogout()}
-        >
-          Sign Out
-        </button>
-        <button className="text-xs text-gray-500 hover:underline mt-1" onClick={() => setTermsModalOpen(true)}>
-          Terms of Service
-        </button>
+          <div className="mt-8 flex flex-col gap-2 items-center">
+            <button
+              className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
+              onClick={() => setModalOpen(true)}
+            >
+              Edit Profile
+            </button>
+            <button
+              className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
+              onClick={() => setShowUpgradeModal(true)}
+            >
+              Manage Subscription
+            </button>
+            <button
+              className="bg-lobsterRed text-weatheredWhite px-6 py-2 w-60 rounded font-bold hover:bg-red-700 transition-colors text-sm shadow"
+              onClick={async () => handleLogout()}
+            >
+              Sign Out
+            </button>
+            <button className="text-xs text-gray-500 hover:underline mt-1" onClick={() => setTermsModalOpen(true)}>
+              Terms of Service
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Edit Profile Modal */}
