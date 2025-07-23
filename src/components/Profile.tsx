@@ -244,12 +244,6 @@ const Profile = () => {
               ></span>
             </span>
           </label>
-          <button
-            className="bg-seafoam text-maineBlue px-3 py-1 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm"
-            onClick={() => setModalOpen(true)}
-          >
-            Edit Profile
-          </button>
         </div>
       </div>
 
