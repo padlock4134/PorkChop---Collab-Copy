@@ -106,14 +106,21 @@ const Profile = () => {
           return;
         }
 
-        const xp = profile.xp || 0;
+        // Ensure XP is a number and has a default value of 0
+        const xp = typeof profile.xp === 'number' ? profile.xp : 0;
+        console.log('Profile XP:', profile.xp, 'Parsed XP:', xp);
+        
         setUserProfile({
           ...profile,
           name: profile.name || 'User',
           xp
         });
 
-        setTalentPoints(Math.floor(xp / 100));
+        // Calculate talent points based on XP
+        const calculatedTalentPoints = Math.floor(xp / 100);
+        setTalentPoints(calculatedTalentPoints);
+        console.log('Calculated talent points:', calculatedTalentPoints);
+        
         // Mock active talents for now (in real implementation, fetch from backend)
         if (xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
         if (xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
