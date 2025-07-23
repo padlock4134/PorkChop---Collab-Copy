@@ -36,7 +36,7 @@ const Profile = () => {
   const [talentPoints, setTalentPoints] = useState(0);
   const [activeTalents, setActiveTalents] = useState<string[]>([]);
   const [kitchenSetup, setKitchenSetup] = useState<string>('Apartment Kitchen');
-  const [activeTab, setActiveTab] = useState<string>('Cast Iron Master');
+  const [activeTab, setActiveTab] = useState<string>('Cast Iron Champion');
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,19 +46,19 @@ const Profile = () => {
   const { modalOpen: termsModalOpen, setModalOpen: setTermsModalOpen, termsContent } = useTermsModal();
 
   const talentTrees = {
-    'Cast Iron Master': [
+    'Cast Iron Champion': [
       { name: 'Sear Savant', cost: 1, active: activeTalents.includes('Sear Savant'), description: 'Perfect searing technique' },
       { name: 'Heat Control', cost: 2, active: activeTalents.includes('Heat Control'), description: 'Mastery of heat distribution' },
       { name: 'Seasoned Surface', cost: 3, active: activeTalents.includes('Seasoned Surface'), description: 'Optimal non-stick surface' },
       { name: 'Iron Chef', cost: 5, active: activeTalents.includes('Iron Chef'), description: 'Ultimate cast iron mastery' },
     ],
-    'Grill Legend': [
+    'Grilling Heavy Weight': [
       { name: 'Flame Tamer', cost: 1, active: activeTalents.includes('Flame Tamer'), description: 'Control over open flames' },
       { name: 'Smoke Master', cost: 2, active: activeTalents.includes('Smoke Master'), description: 'Perfect smoky flavors' },
       { name: 'Grill Marks', cost: 3, active: activeTalents.includes('Grill Marks'), description: 'Signature grill patterns' },
       { name: 'BBQ God', cost: 5, active: activeTalents.includes('BBQ God'), description: 'Legendary grilling skills' },
     ],
-    'Baking Fool': [
+    'Baking Warlock': [
       { name: 'Dough Whisperer', cost: 1, active: activeTalents.includes('Dough Whisperer'), description: 'Perfect dough consistency' },
       { name: 'Oven Oracle', cost: 2, active: activeTalents.includes('Oven Oracle'), description: 'Precise baking timing' },
       { name: 'Pastry Pro', cost: 3, active: activeTalents.includes('Pastry Pro'), description: 'Expert in pastries' },
