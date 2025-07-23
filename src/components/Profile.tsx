@@ -207,9 +207,8 @@ const Profile = () => {
       <h2 className="text-lg font-retro mb-2 text-center">My Culinary Journey</h2>
       {/* Active Talents and Talent Trees - Compact and Centered Buttons */}
       <div className="mb-4">
-        <span className="block mb-1 font-semibold text-sm text-center">Active Talents</span>
         <div className="flex flex-wrap justify-center gap-1.5 mb-1.5">
-          {activeTalents.length > 0 ? (
+          {activeTalents.length > 0 &&
             activeTalents.slice(0, 3).map(talent => (
               <span
                 key={talent}
@@ -217,10 +216,7 @@ const Profile = () => {
               >
                 {talent}
               </span>
-            ))
-          ) : (
-            <span className="text-xs text-gray-500">No talents yet. Cook to earn points!</span>
-          )}
+            ))}
           {activeTalents.length > 3 && (
             <span className="px-2 py-0.5 rounded-full border font-bold text-xs text-gray-500">+{activeTalents.length - 3} more</span>
           )}
