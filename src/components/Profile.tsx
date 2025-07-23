@@ -356,7 +356,6 @@ function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
 }) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
-  const [avatar, setAvatar] = useState(user.avatar || '');
   const [experience, setExperience] = useState(user.experience || 'Beginner');
   const [dietary, setDietary] = useState<string[]>(user.dietary || []);
   const [cuisine, setCuisine] = useState<string[]>(user.cuisine || []);
@@ -367,7 +366,6 @@ function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
     if (open) {
       setName(user.name);
       setEmail(user.email);
-      setAvatar(user.avatar || '');
       setExperience(user.experience || 'Beginner');
       setDietary(user.dietary || []);
       setCuisine(user.cuisine || []);
@@ -381,7 +379,6 @@ function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
       const updatedProfile = {
         name,
         email,
-        avatar: avatar || null,
         experience,
         dietary,
         cuisine,
@@ -402,7 +399,6 @@ function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
           ...user,
           name: data.name,
           email: data.email,
-          avatar: data.avatar,
           experience: data.experience,
           dietary: data.dietary,
           cuisine: data.cuisine,
@@ -441,17 +437,11 @@ function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
           placeholder="Your Email"
         />
       </div>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
-        <input
-          type="text"
-          value={avatar}
-          onChange={(e) => setAvatar(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-          placeholder="https://example.com/avatar.jpg"
-        />
-      </div>
-      <div className="mb-4">
+      
+      {/* Preferences Section - Directly under Cooking Experience */}
+      <h3 className="text-lg font-retro mb-2 text-maineBlue">Preferences</h3>
+      {/* Cooking Experience - Single-Select Dropdown */}
+      <div className="mb-3">
         <label className="block text-sm font-medium text-gray-700 mb-1">Cooking Experience</label>
         <select
           value={experience}
@@ -464,9 +454,6 @@ function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
           <option value="Professional">Professional</option>
         </select>
       </div>
-      
-      {/* Preferences Section - Directly under Cooking Experience */}
-      <h3 className="text-lg font-retro mb-2 text-maineBlue">Preferences</h3>
       {/* Dietary Preferences - Single-Select Dropdown */}
       <div className="mb-3">
         <span className="block mb-1 font-semibold text-sm">Dietary</span>
