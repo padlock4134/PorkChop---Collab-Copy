@@ -15,13 +15,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, plan, userId
     // Redirect to the checkout link based on the selected plan
     const checkoutUrl = await createStripeCheckoutSession(userId, plan);
     window.location.href = checkoutUrl;
-
-    // if (plan === 'yearly') {
-    //   window.location.href = 'https://buy.stripe.com/dRmeVddkU19lcT2fohfUQ03'; // Yearly plan - $99/year
-    // } else {
-    //   window.location.href = 'https://buy.stripe.com/aFa9AT3Kk9FR4mw4JDfUQ02'; // Monthly plan - $10.99/month
-    // }
   };
+
+  // Cancel Subscription handler (placeholder)
+  const handleCancelSubscription = async () => {
+    // TODO: Replace with actual cancellation logic (Stripe portal, API call, etc.)
+    alert('Cancel subscription functionality coming soon!');
+  };
+
   
   if (!open) return null;
 
@@ -54,6 +55,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, plan, userId
           className="w-full py-3 rounded bg-seafoam text-maineBlue font-bold text-lg hover:bg-maineBlue hover:text-seafoam transition-colors"
         >
           Subscribe
+        </button>
+        {/* Cancel Subscription button */}
+        <button
+          onClick={handleCancelSubscription}
+          className="w-full py-3 mt-3 rounded bg-lobsterRed text-weatheredWhite font-bold text-lg hover:bg-red-700 transition-colors"
+        >
+          Cancel Subscription
         </button>
         
         <p className="mt-4 text-xs text-gray-500 text-center">
