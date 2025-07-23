@@ -50,7 +50,7 @@ function createErrorResponse (statusCode, message, devMessage = null) {
 }
 
 function createRedirectResponse (location, cookies = []) {
-  return {
+  const response = {
     statusCode: 302,
     headers: {
       'Location': location,
@@ -60,6 +60,14 @@ function createRedirectResponse (location, cookies = []) {
     },
     body: ''
   };
+
+  if (cookies.length > 0) {
+    response.multiValueHeaders = {
+      'Set-Cookie': cookies
+    };
+  }
+
+  return response;
 }
 
 function createOkResponseWithBody (body, cookies = [], noCache = false) {
@@ -67,16 +75,23 @@ function createOkResponseWithBody (body, cookies = [], noCache = false) {
     throw new Error('Response body missing for 200 response');
   }
 
-  return {
+  const response = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
       ...(noCache && { 'Cache-Control': 'no-store' }),
       ...(noCache && { 'Pragma': 'no-cache' }),
-      ...(cookies.length > 0 && { 'Set-Cookie': cookies })
     },
     body
   };
+
+  if (cookies.length > 0) {
+    response.multiValueHeaders = {
+      'Set-Cookie': cookies
+    };
+  }
+
+  return response;
 }
 
 module.exports = {
