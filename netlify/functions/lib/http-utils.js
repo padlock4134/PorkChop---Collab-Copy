@@ -56,7 +56,6 @@ function createRedirectResponse (location, cookies = []) {
       'Location': location,
       'Cache-Control': 'no-store',
       'Pragma': 'no-cache',
-      ...(cookies.length > 0 && { 'Set-Cookie': cookies })
     },
     body: ''
   };
@@ -66,6 +65,9 @@ function createRedirectResponse (location, cookies = []) {
       'Set-Cookie': cookies
     };
   }
+  // if (cookies.length > 0) {
+  //   response.headers['Set-Cookie'] = cookies.join('; ');
+  // }
 
   return response;
 }
@@ -90,6 +92,9 @@ function createOkResponseWithBody (body, cookies = [], noCache = false) {
       'Set-Cookie': cookies
     };
   }
+  // if (cookies.length > 0) {
+  //   response.headers['Set-Cookie'] = cookies.join('; ');
+  // }
 
   return response;
 }
