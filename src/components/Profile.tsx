@@ -31,7 +31,7 @@ type UserProfile = {
 };
 
 const Profile = () => {
-  const { user, isSessionValid } = useSupabase();
+  const { user } = useSupabase();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -84,8 +84,7 @@ const Profile = () => {
       setLoading(true);
       setError('');
       try {
-        const sessionValid = await isSessionValid();
-        if (!sessionValid) {
+        if (!user) {
           setError('Not authenticated. Please sign in again.');
           setLoading(false);
           return;
