@@ -3,6 +3,8 @@ import { redirectToLogout } from '@wristband/react-client-auth';
 
 import { supabase } from '../api/supabaseClient';
 import { useSupabase } from '../components/SupabaseProvider';
+import { verifySubscription } from '../api/userSubscription';
+import { Subscription } from '../types/shared-types';
 import PaymentModal from './PaymentModal';
 import { isSessionValid } from '../api/userSession';
 
@@ -29,19 +31,19 @@ type UserProfile = {
 };
 
 const Profile = () => {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showTalents, setShowTalents] = useState(true);
-  const [talentPoints, setTalentPoints] = useState(0);
-  const [activeTalents, setActiveTalents] = useState<string[]>([]);
-  const [kitchenSetup, setKitchenSetup] = useState<string>('Apartment Kitchen');
-  const [activeTab, setActiveTab] = useState<string>('Cast Iron Champion');
-  const [modalOpen, setModalOpen] = useState(false);
+  const { user, isSessionValid } = useSupabase();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const { user } = useSupabase();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [activeTalents, setActiveTalents] = useState<string[]>([]);
+  const [talentPoints, setTalentPoints] = useState(0);
+  const [activeTab, setActiveTab] = useState('Cast Iron Champion');
+  const [showTalents, setShowTalents] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [kitchenSetup, setKitchenSetup] = useState<string>('Apartment Kitchen');
 
   const { modalOpen: termsModalOpen, setModalOpen: setTermsModalOpen, termsContent } = useTermsModal();
 
@@ -124,6 +126,15 @@ const Profile = () => {
         // Mock active talents for now (in real implementation, fetch from backend)
         if (xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
         if (xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
+        
+        // Fetch subscription information
+        try {
+          const subscriptionData = await verifySubscription(user?.id || '');
+          setSubscription(subscriptionData.subscription);
+        } catch (subError) {
+          console.error('Error fetching subscription:', subError);
+          // Don't set error state here to avoid blocking profile display
+        }
       } catch (err) {
         console.error('Profile fetch error:', err);
         setError('An unexpected error occurred while loading your profile.');
@@ -179,9 +190,18 @@ const Profile = () => {
           )}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-maineBlue mb-2">{userProfile.name}</h2>
-          <div className="text-base text-gray-600 mb-1">XP: {userProfile.xp} | Talent Points: {talentPoints}</div>
-          <div className="text-base text-gray-600">Experience: {userProfile.experience}</div>
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-xl font-bold text-maineBlue">{userProfile.name}</h2>
+            {subscription && (
+              <span className={`px-2 py-0.5 text-xs rounded-full ${
+                subscription.plan === 'yearly' 
+                  ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                  : 'bg-blue-100 text-blue-800 border border-blue-300'
+              }`}>
+                {subscription.plan === 'yearly' ? 'Yearly' : 'Monthly'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
