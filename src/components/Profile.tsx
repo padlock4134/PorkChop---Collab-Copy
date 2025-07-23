@@ -363,6 +363,7 @@ const Profile = () => {
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         userId={user?.id || ''}
+        plan="monthly"
       />
       
       <TermsModal

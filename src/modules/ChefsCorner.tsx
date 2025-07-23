@@ -11,36 +11,48 @@ import { useSupabase } from '../components/SupabaseProvider';
 
 const ChefsCorner = () => {
   const { updateContext } = useFreddieContext();
-  const { setRecipes } = useRecipeContext();
-
+  const { recipes, setRecipes } = useRecipeContext();
   const { user } = useSupabase();
   
+  // Shopping list state
+  const [shoppingList, setShoppingList] = useState<string[]>([]);
+  const [cookbookModalOpen, setCookbookModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     updateContext({ page: 'ChefsCorner' });
     
     // Load recipes from cookbook when Chef's Corner loads
     const loadRecipes = async () => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
-        const savedRecipes = await fetchCookbook(user?.id!);
-        setRecipes(savedRecipes);
+        setIsLoading(true);
+        const savedRecipes = await fetchCookbook(user.id);
+        setRecipes(savedRecipes || []);
       } catch (err) {
         console.error('Error loading cookbook recipes:', err);
+        // Initialize with empty array if there's an error
+        setRecipes([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     loadRecipes();
-  }, [updateContext, setRecipes]);
-
-  // Shopping list state
-  const [shoppingList, setShoppingList] = useState<string[]>([]);
-
-  // Modal state for CookBook import
-  const [cookbookModalOpen, setCookbookModalOpen] = useState(false);
-
-  // Removed coords state since NearbyPlaces now handles its own location
+  }, [updateContext, setRecipes, user?.id]);
 
   // Open modal for My CookBook import
-  const importFromCookBook = () => setCookbookModalOpen(true);
+  const importFromCookBook = () => {
+    if (!user) {
+      alert('Please sign in to access your cookbook');
+      return;
+    }
+    setCookbookModalOpen(true);
+  };
 
   // Handler for modal import - only add ingredients not in kitchen
   const handleCookBookImport = async (ingredientNames: string[]) => {
@@ -82,7 +94,13 @@ const ChefsCorner = () => {
             <h2 className="text-xl font-bold text-maineBlue mb-3 text-center">Shopping List</h2>
             <div className="bg-sand rounded shadow p-4 flex flex-col items-center">
               <p className="mb-2 text-gray-700 text-center">Import your saved recipes from My CookBook and shop everything you need in one click!</p>
-              <button onClick={importFromCookBook} className="bg-maineBlue text-seafoam px-4 py-2 rounded font-bold hover:bg-seafoam hover:text-maineBlue transition-colors w-full">Import from My CookBook</button>
+              <button 
+                onClick={importFromCookBook} 
+                className="bg-maineBlue text-seafoam px-4 py-2 rounded font-bold hover:bg-seafoam hover:text-maineBlue transition-colors w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Loading...' : 'Import from My CookBook'}
+              </button>
               <CookBookImportModal
                 open={cookbookModalOpen}
                 onClose={() => setCookbookModalOpen(false)}
@@ -122,4 +140,3 @@ const ChefsCorner = () => {
 };
 
 export default ChefsCorner;
-
