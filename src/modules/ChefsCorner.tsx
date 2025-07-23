@@ -54,7 +54,7 @@ const ChefsCorner = () => {
     setCookbookModalOpen(true);
   };
 
-  // Handler for modal import - only add ingredients not in kitchen
+  // Handler for modal import - add all ingredients, only deduplicating within the shopping list
   const handleCookBookImport = async (ingredientNames: string[]) => {
     console.log('Importing ingredients:', ingredientNames);
     
@@ -65,45 +65,49 @@ const ChefsCorner = () => {
     }
 
     try {
-      // Get current kitchen ingredients
-      const kitchenIngredients = user?.id ? await fetchKitchen(user.id) : [];
-      console.log('Current kitchen ingredients:', kitchenIngredients);
+      // Process all ingredients first
+      const allIngredients = ingredientNames
+        .filter((item): item is string => item != null) // Remove null/undefined
+        .map(item => String(item).trim()) // Ensure string and trim
+        .filter(item => item.length > 0); // Remove empty strings
       
-      // Normalize kitchen ingredient names for comparison
-      const kitchenNames = Array.isArray(kitchenIngredients) 
-        ? kitchenIngredients.map(i => 
-            typeof i === 'string' 
-              ? i.trim().toLowerCase() 
-              : (i?.name || '').toString().trim().toLowerCase()
-          ).filter(Boolean)
-        : [];
+      console.log('Processed ingredients to add:', allIngredients);
       
-      console.log('Normalized kitchen names:', kitchenNames);
+      if (allIngredients.length === 0) {
+        console.log('No valid ingredients to add');
+        return;
+      }
       
-      // Filter out ingredients already in the kitchen (case-insensitive)
-      const missingIngredients = ingredientNames.filter(name => {
-        if (name === null || name === undefined) return false;
-        const normalized = String(name).trim().toLowerCase();
-        return !kitchenNames.includes(normalized);
-      });
-      
-      console.log('Missing ingredients to add:', missingIngredients);
-      
-      // Add to shopping list, removing duplicates
+      // Add to shopping list, removing duplicates (case-insensitive)
       setShoppingList(currentList => {
-        const currentNormalized = new Set(currentList.map(i => i.trim().toLowerCase()));
-        const newItems = missingIngredients.filter(
+        // Create a Set of normalized current list items for quick lookup
+        const currentNormalized = new Set(
+          currentList.map(item => item.trim().toLowerCase())
+        );
+        
+        // Only add items that aren't already in the shopping list
+        const newItems = allIngredients.filter(
           item => !currentNormalized.has(item.trim().toLowerCase())
         );
         
+        if (newItems.length === 0) {
+          console.log('No new ingredients to add - all already in shopping list');
+          return currentList;
+        }
+        
         const updatedList = [...currentList, ...newItems];
+        console.log('Added new items to shopping list:', newItems);
         console.log('Updated shopping list:', updatedList);
         return updatedList;
       });
       
-    } catch (err) {
-      console.error('Error in handleCookBookImport:', err);
-      alert('Could not process ingredients: ' + (err as Error).message);
+      alert(`Added ${allIngredients.length} ingredients to your shopping list`);
+      
+    } catch (error) {
+      console.error('Error importing ingredients:', error);
+      alert('Failed to import ingredients. Please try again.');
+    } finally {
+      setCookbookModalOpen(false);
     }
   };
 
