@@ -4,6 +4,18 @@ import { getUserPreferences } from './userPreferences';
 import { supabase } from './supabaseClient';
 import { isSessionValid } from './userSession';
 
+// Define equipment available for each kitchen setup
+const KITCHEN_EQUIPMENT = {
+  'Dorm Life': ['microwave', 'kettle', 'toaster', 'mini-fridge'],
+  'Minimalist': ['pot', 'pan', 'knife', 'cutting board', 'stove'],
+  'Apartment Kitchen': ['oven', 'stove', 'basic utensils', 'baking sheets'],
+  'Outdoor Grilling': ['grill', 'tongs', 'grill brush', 'meat thermometer'],
+  'Home Chef': ['blender', 'food processor', 'mixer', 'knives', 'oven', 'stove'],
+  'Full Chef\'s Kitchen': ['all equipment']
+} as const;
+
+type KitchenSetup = keyof typeof KITCHEN_EQUIPMENT;
+
 const ANTHROPIC_API_URL = '/.netlify/functions/anthropic-proxy';
 const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos';
 const unsplashKey = (import.meta as any).env.VITE_UNSPLASH_ACCESS_KEY;
@@ -37,13 +49,13 @@ const RECIPE_PROMPTS = {
     5. Include necessary equipment for each recipe`
 };
 
-async function getUserProfile(userId) {
+async function getUserProfile(userId: string) {
   const sessionValid = await isSessionValid();
   if (!sessionValid || !userId) return null;
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('dietary, cuisine')
+    .select('dietary, cuisine, kitchen_setup')
     .eq('id', userId)
     .single();
 
@@ -52,11 +64,69 @@ async function getUserProfile(userId) {
     return null;
   }
 
-  return data;
+  return data as {
+    dietary: string[];
+    cuisine: string[];
+    kitchen_setup?: string;
+  };
 }
 
-export async function fetchRecipesWithImages(userId: string, ingredients: string[], numRecipes = 5): Promise<RecipeCard[]> {
-  // 1. Get user preferences
+// Helper function for fuzzy matching ingredients
+function fuzzyMatch(ingredient1: string, ingredient2: string): boolean {
+  const normalize = (str: string) => str.toLowerCase().trim()
+    .replace(/[^\w\s]/g, '') // Remove special characters
+    .replace(/\s+/g, ' ');    // Normalize whitespace
+    
+  const norm1 = normalize(ingredient1);
+  const norm2 = normalize(ingredient2);
+  
+  // Check for direct inclusion or common variations
+  return norm1.includes(norm2) || 
+         norm2.includes(norm1) ||
+         norm1.split(' ').some(word => norm2.includes(word)) ||
+         norm2.split(' ').some(word => norm1.includes(word));
+}
+
+// Score a recipe based on user's cupboard, preferences, and kitchen setup
+function scoreRecipe(
+  recipe: RecipeCard, 
+  cupboard: string[],
+  kitchenSetup?: string
+): number {
+  let score = 0;
+  
+  // 1. Score based on matching ingredients (higher weight)
+  const matchingIngredients = recipe.ingredients.filter(recipeIng => 
+    cupboard.some(cupboardIng => fuzzyMatch(recipeIng, cupboardIng))
+  ).length;
+  
+  score += matchingIngredients * 2;
+  
+  // 2. Penalize based on missing equipment
+  if (kitchenSetup && kitchenSetup in KITCHEN_EQUIPMENT) {
+    const availableEquipment = KITCHEN_EQUIPMENT[kitchenSetup as KitchenSetup];
+    const requiredEquipment = recipe.equipment || [];
+    
+    const missingEquipment = requiredEquipment.filter(eq => {
+      if (availableEquipment.includes('all equipment')) return false;
+      return !availableEquipment.some(available => 
+        eq.toLowerCase().includes(available.toLowerCase())
+      );
+    });
+    
+    // Apply penalty for missing equipment
+    score -= missingEquipment.length * 1.5;
+  }
+  
+  return score;
+}
+
+export async function fetchRecipesWithImages(
+  userId: string, 
+  ingredients: string[], 
+  numRecipes = 5
+): Promise<RecipeCard[]> {
+  // 1. Get user preferences and profile
   const [{ experienceLevel }, profile] = await Promise.all([
     getUserPreferences(userId),
     getUserProfile(userId)
@@ -64,12 +134,13 @@ export async function fetchRecipesWithImages(userId: string, ingredients: string
 
   const promptTemplate = RECIPE_PROMPTS[experienceLevel] || RECIPE_PROMPTS[DEFAULT_EXPERIENCE_LEVEL];
   
-  // 2. Build the Anthropic prompt
+  // 2. Build the Anthropic prompt with enhanced instructions
   const basePrompt = promptTemplate(numRecipes, ingredients);
   
-  // Add dietary and cuisine preferences if available
+  // Get preferences
   const dietaryPrefs = profile?.dietary || [];
   const cuisinePrefs = profile?.cuisine || [];
+  const kitchenSetup = profile?.kitchen_setup || '';
   
   const prompt = `${basePrompt}
 
@@ -128,10 +199,29 @@ Return ONLY the JSON array, no other text.`;
     return generateFallbackRecipes(userId, ingredients, numRecipes);
   }
 
-  // 4. Fetch images for each recipe
-  const imagePromises = recipes.slice(0, numRecipes).map(async (recipe: any) => {
+  // 4. Score and sort recipes based on user's cupboard and kitchen setup
+  const scoredRecipes = recipes
+    .map(recipe => ({
+      ...recipe,
+      score: scoreRecipe(
+        {
+          ...recipe,
+          ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
+          equipment: Array.isArray(recipe.equipment) ? recipe.equipment : []
+        },
+        ingredients,
+        kitchenSetup
+      )
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, numRecipes);
+
+  // 5. Fetch images for top recipes
+  const imagePromises = scoredRecipes.map(async (recipe) => {
     try {
-      const res = await fetch(`${UNSPLASH_API_URL}?query=${encodeURIComponent(recipe.title)}&client_id=${unsplashKey}`);
+      const res = await fetch(
+        `${UNSPLASH_API_URL}?query=${encodeURIComponent(recipe.title)}&client_id=${unsplashKey}`
+      );
       const data = await res.json();
       return data.results?.[0]?.urls?.small || '';
     } catch (err) {
@@ -142,14 +232,14 @@ Return ONLY the JSON array, no other text.`;
 
   const images = await Promise.all(imagePromises);
 
-  // 5. Return recipe cards
-  return recipes.slice(0, numRecipes).map((r, i) => ({
+  // 6. Return scored recipe cards with images
+  return scoredRecipes.map((recipe, i) => ({
     id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
-    title: r.title,
+    title: recipe.title,
     image: images[i],
-    ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
-    instructions: Array.isArray(r.instructions) ? r.instructions.join('\n') : '',
-    equipment: Array.isArray(r.equipment) ? r.equipment : []
+    ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
+    instructions: Array.isArray(recipe.instructions) ? recipe.instructions.join('\n') : '',
+    equipment: Array.isArray(recipe.equipment) ? recipe.equipment : []
   }));
 }
 

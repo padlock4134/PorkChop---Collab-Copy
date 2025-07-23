@@ -534,13 +534,36 @@ function EditProfileModal({
           onChange={(e) => {
             setKitchenSetup(e.target.value);
           }}
+          title={
+            kitchenSetup === 'Apartment Kitchen' ? 'Basic stovetop and oven' :
+            kitchenSetup === 'Outdoor Grilling' ? 'Grill and basic prep tools' :
+            kitchenSetup === 'Home Chef' ? 'Standard equipment + some specialty tools' :
+            kitchenSetup === 'Minimalist' ? 'Just the basics' :
+            kitchenSetup === 'Dorm Life' ? 'Microwave, mini-fridge, and basic appliances' :
+            'Professional setup with all equipment'
+          }
         >
           {[
-            'Apartment Kitchen', 'Grilling Setup', 'Full Chef Station'
+            'Apartment Kitchen',
+            'Outdoor Grilling',
+            'Home Chef',
+            'Minimalist',
+            'Dorm Life',
+            'Full Chef\'s Kitchen'
           ].map(option => (
-            <option key={option} value={option}>{option}</option>
+            <option key={option} value={option}>
+              {option}
+            </option>
           ))}
         </select>
+        <p className="text-xs text-gray-500 mt-1">
+          {kitchenSetup === 'Apartment Kitchen' && 'Basic stovetop and oven'}
+          {kitchenSetup === 'Outdoor Grilling' && 'Grill and basic prep tools'}
+          {kitchenSetup === 'Home Chef' && 'Standard equipment + some specialty tools'}
+          {kitchenSetup === 'Minimalist' && 'Just the basics'}
+          {kitchenSetup === 'Dorm Life' && 'Microwave, mini-fridge, and basic appliances'}
+          {kitchenSetup === 'Full Chef\'s Kitchen' && 'Professional setup with all equipment'}
+        </p>
       </div>
 
       <div className="flex justify-end gap-2 mt-4">
