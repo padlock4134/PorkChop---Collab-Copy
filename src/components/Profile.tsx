@@ -6,7 +6,6 @@ import { useSupabase } from '../components/SupabaseProvider';
 import { verifySubscription } from '../api/userSubscription';
 import { Subscription } from '../types/shared-types';
 import PaymentModal from './PaymentModal';
-import { isSessionValid } from '../api/userSession';
 
 // Define a simple hook for TermsModal since the original import is incorrect
 function useTermsModal() {
