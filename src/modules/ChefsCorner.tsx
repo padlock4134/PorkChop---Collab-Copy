@@ -139,6 +139,7 @@ const ChefsCorner = () => {
                 open={cookbookModalOpen}
                 onClose={() => setCookbookModalOpen(false)}
                 onImport={handleCookBookImport}
+                existingIngredients={shoppingList}
               />
               <ul className="mt-4 w-full">
                 {shoppingList.length === 0 ? (
