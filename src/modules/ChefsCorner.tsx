@@ -56,24 +56,54 @@ const ChefsCorner = () => {
 
   // Handler for modal import - only add ingredients not in kitchen
   const handleCookBookImport = async (ingredientNames: string[]) => {
+    console.log('Importing ingredients:', ingredientNames);
+    
+    if (!ingredientNames || !Array.isArray(ingredientNames)) {
+      console.error('Invalid ingredients data received:', ingredientNames);
+      alert('Error: Invalid ingredients data');
+      return;
+    }
+
     try {
-      const kitchenIngredients = await fetchKitchen(user?.id!);
-      let kitchenNames: string[] = [];
-      if (Array.isArray(kitchenIngredients) && kitchenIngredients.length > 0) {
-        if (kitchenIngredients.every(i => typeof i === 'string')) {
-          kitchenNames = kitchenIngredients as string[];
-        } else if (kitchenIngredients.every(i => typeof i === 'object' && i !== null && 'name' in i)) {
-          kitchenNames = (kitchenIngredients as { name: string }[]).map(i => i.name);
-        } else {
-          kitchenNames = [];
-        }
-      }
-      const missing = ingredientNames.filter(name => !kitchenNames.map(n => n.trim().toLowerCase()).includes(name.trim().toLowerCase()));
-      setShoppingList(Array.from(new Set([...shoppingList, ...missing].map(i => i.trim()).filter(Boolean))));
+      // Get current kitchen ingredients
+      const kitchenIngredients = user?.id ? await fetchKitchen(user.id) : [];
+      console.log('Current kitchen ingredients:', kitchenIngredients);
+      
+      // Normalize kitchen ingredient names for comparison
+      const kitchenNames = Array.isArray(kitchenIngredients) 
+        ? kitchenIngredients.map(i => 
+            typeof i === 'string' 
+              ? i.trim().toLowerCase() 
+              : (i?.name || '').toString().trim().toLowerCase()
+          ).filter(Boolean)
+        : [];
+      
+      console.log('Normalized kitchen names:', kitchenNames);
+      
+      // Filter out ingredients already in the kitchen (case-insensitive)
+      const missingIngredients = ingredientNames.filter(name => {
+        if (name === null || name === undefined) return false;
+        const normalized = String(name).trim().toLowerCase();
+        return !kitchenNames.includes(normalized);
+      });
+      
+      console.log('Missing ingredients to add:', missingIngredients);
+      
+      // Add to shopping list, removing duplicates
+      setShoppingList(currentList => {
+        const currentNormalized = new Set(currentList.map(i => i.trim().toLowerCase()));
+        const newItems = missingIngredients.filter(
+          item => !currentNormalized.has(item.trim().toLowerCase())
+        );
+        
+        const updatedList = [...currentList, ...newItems];
+        console.log('Updated shopping list:', updatedList);
+        return updatedList;
+      });
+      
     } catch (err) {
-      alert('Could not compare with kitchen: ' + (err as Error).message);
-      // fallback: add all
-      setShoppingList(Array.from(new Set([...shoppingList, ...ingredientNames].map(i => i.trim()).filter(Boolean))));
+      console.error('Error in handleCookBookImport:', err);
+      alert('Could not process ingredients: ' + (err as Error).message);
     }
   };
 

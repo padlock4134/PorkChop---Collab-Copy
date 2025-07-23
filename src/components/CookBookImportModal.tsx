@@ -50,22 +50,67 @@ const CookBookImportModal: React.FC<CookBookImportModalProps> = ({ open, onClose
     
     setIsLoading(true);
     try {
-      // Extract and process ingredients from selected recipes
-      const allIngredients = selected
-        .map(idx => recipes[idx]?.ingredients || [])
-        .flat()
-        .filter(Boolean);
+      console.log('Selected recipe indices:', selected);
+      console.log('All recipes:', recipes);
       
-      // Remove duplicates and trim whitespace
-      const uniqueIngredients = Array.from(new Set(
-        allIngredients.map(i => i.trim())
-      ));
+      // Extract all ingredients from selected recipes
+      const allIngredients = selected.flatMap(recipeIdx => {
+        const recipe = recipes[recipeIdx];
+        if (!recipe) {
+          console.warn(`No recipe found at index ${recipeIdx}`);
+          return [];
+        }
+        
+        console.log(`Processing recipe ${recipeIdx}:`, recipe.title, 'Ingredients:', recipe.ingredients);
+        
+        try {
+          // Handle different possible ingredient formats
+          if (Array.isArray(recipe.ingredients)) {
+            return recipe.ingredients.map(ing => {
+              // If it's a string, use it as is
+              if (typeof ing === 'string') return ing.trim();
+              // If it's an object with a 'name' property, use that
+              const ingredientObj = ing as { name?: unknown };
+              if (ingredientObj && typeof ingredientObj === 'object' && 'name' in ingredientObj) {
+                return String(ingredientObj.name).trim();
+              }
+              // Otherwise, try to convert to string
+              return String(ing).trim();
+            }).filter((ing): ing is string => Boolean(ing));
+          }
+          
+          // If ingredients is a string, try to split by newlines or commas
+          const ingredientsStr = String(recipe.ingredients || '');
+          if (ingredientsStr) {
+            return ingredientsStr
+              .split(/[\n,]/)
+              .map(ing => ing.trim())
+              .filter(Boolean);
+          }
+          
+          console.warn('Unsupported ingredients format:', recipe.ingredients);
+          return [];
+          
+        } catch (error) {
+          console.error(`Error processing recipe ${recipeIdx} (${recipe.title}):`, error);
+          return [];
+        }
+      });
       
-      onImport(uniqueIngredients);
+      console.log('All extracted ingredients:', allIngredients);
+      
+      if (allIngredients.length === 0) {
+        alert('No valid ingredients found in the selected recipes.');
+        return;
+      }
+      
+      // Pass all ingredients to parent component
+      onImport(allIngredients);
       onClose();
+      
     } catch (error) {
-      console.error('Error importing recipes:', error);
-      alert('Failed to import recipes. Please try again.');
+      console.error('Error in import process:', error);
+      alert('Failed to import recipes. Please check the console for details.');
     } finally {
       setIsLoading(false);
     }
