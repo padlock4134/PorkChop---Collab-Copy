@@ -36,7 +36,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [activeTalents, setActiveTalents] = useState<string[]>([]);
+  // Store selected talents in state; permanent for this session
+  const [selectedTalents, setSelectedTalents] = useState<string[]>([]);
   const [talentPoints, setTalentPoints] = useState(0);
   const [activeTab, setActiveTab] = useState('Cast Iron Champion');
   const [showTalents, setShowTalents] = useState(true);
@@ -48,24 +49,40 @@ const Profile = () => {
 
   const { modalOpen: termsModalOpen, setModalOpen: setTermsModalOpen, termsContent } = useTermsModal();
 
+  // 9 talents per tree, unlock at 10, 14, 25, 30, 36, 42, 48, 55, 60
   const talentTrees = {
     'Cast Iron Champion': [
-      { name: 'Sear Savant', icon: FireIcon, unlockLevel: 10, cost: 1, active: activeTalents.includes('Sear Savant'), description: 'Perfect searing technique' },
-      { name: 'Heat Control', icon: ShieldCheckIcon, unlockLevel: 14, cost: 2, active: activeTalents.includes('Heat Control'), description: 'Mastery of heat distribution' },
-      { name: 'Seasoned Surface', icon: StarIcon, unlockLevel: 18, cost: 3, active: activeTalents.includes('Seasoned Surface'), description: 'Optimal non-stick surface' },
-      { name: 'Iron Chef', icon: TrophyIcon, unlockLevel: 60, cost: 5, active: activeTalents.includes('Iron Chef'), description: 'Ultimate cast iron mastery (Capstone)' },
+      { name: 'Sear Savant', icon: FireIcon, unlockLevel: 10, description: 'Perfect searing technique for meats and veggies.' },
+      { name: 'Heat Control', icon: ShieldCheckIcon, unlockLevel: 14, description: 'Master even heat for flawless results.' },
+      { name: 'Iron Will', icon: StarIcon, unlockLevel: 25, description: 'Reduces chance of burning food.' },
+      { name: 'Seasoned Veteran', icon: TrophyIcon, unlockLevel: 30, description: 'Enhances seasoning absorption.' },
+      { name: 'Rustproof', icon: ShieldCheckIcon, unlockLevel: 36, description: 'Prevents cast iron from rusting.' },
+      { name: 'Heavy Hitter', icon: FireIcon, unlockLevel: 42, description: 'Extra sear power for thick cuts.' },
+      { name: 'Surface Sage', icon: StarIcon, unlockLevel: 48, description: 'Non-stick mastery for delicate foods.' },
+      { name: 'Ironclad', icon: ShieldCheckIcon, unlockLevel: 55, description: 'Cast iron lasts a lifetime.' },
+      { name: 'Iron Chef', icon: TrophyIcon, unlockLevel: 60, description: 'Ultimate cast iron mastery (Capstone).' },
     ],
     'Grilling Heavy Weight': [
-      { name: 'Flame Tamer', icon: FireIcon, unlockLevel: 10, cost: 1, active: activeTalents.includes('Flame Tamer'), description: 'Control over open flames' },
-      { name: 'Smoke Master', icon: SparklesIcon, unlockLevel: 14, cost: 2, active: activeTalents.includes('Smoke Master'), description: 'Perfect smoky flavors' },
-      { name: 'Grill Marks', icon: StarIcon, unlockLevel: 18, cost: 3, active: activeTalents.includes('Grill Marks'), description: 'Signature grill patterns' },
-      { name: 'BBQ God', icon: TrophyIcon, unlockLevel: 60, cost: 5, active: activeTalents.includes('BBQ God'), description: 'Legendary grilling skills (Capstone)' },
+      { name: 'Flame Tamer', icon: FireIcon, unlockLevel: 10, description: 'Control over open flames.' },
+      { name: 'Smoke Master', icon: SparklesIcon, unlockLevel: 14, description: 'Perfect smoky flavors every time.' },
+      { name: 'Char Champion', icon: StarIcon, unlockLevel: 25, description: 'Expert in char marks and crust.' },
+      { name: 'Grill Marks', icon: StarIcon, unlockLevel: 30, description: 'Signature grill patterns.' },
+      { name: 'BBQ Buff', icon: ShieldCheckIcon, unlockLevel: 36, description: 'Increased BBQ efficiency.' },
+      { name: 'Pit Boss', icon: TrophyIcon, unlockLevel: 42, description: 'Command any grill with ease.' },
+      { name: 'Coal Whisperer', icon: FireIcon, unlockLevel: 48, description: 'Perfect coal management.' },
+      { name: 'Grill Guardian', icon: ShieldCheckIcon, unlockLevel: 55, description: 'Grill never fails.' },
+      { name: 'BBQ God', icon: TrophyIcon, unlockLevel: 60, description: 'Legendary grilling skills (Capstone).' },
     ],
     'Baking Warlock': [
-      { name: 'Dough Whisperer', icon: CakeIcon, unlockLevel: 10, cost: 1, active: activeTalents.includes('Dough Whisperer'), description: 'Perfect dough consistency' },
-      { name: 'Oven Oracle', icon: ShieldCheckIcon, unlockLevel: 14, cost: 2, active: activeTalents.includes('Oven Oracle'), description: 'Precise baking timing' },
-      { name: 'Pastry Pro', icon: StarIcon, unlockLevel: 18, cost: 3, active: activeTalents.includes('Pastry Pro'), description: 'Expert in pastries' },
-      { name: 'Bread Buffoon', icon: AcademicCapIcon, unlockLevel: 60, cost: 5, active: activeTalents.includes('Bread Buffoon'), description: 'Master of all baked goods (Capstone)' },
+      { name: 'Dough Whisperer', icon: CakeIcon, unlockLevel: 10, description: 'Perfect dough consistency.' },
+      { name: 'Oven Oracle', icon: ShieldCheckIcon, unlockLevel: 14, description: 'Precise baking timing.' },
+      { name: 'Proofing Pro', icon: StarIcon, unlockLevel: 25, description: 'Expert in proofing dough.' },
+      { name: 'Pastry Pro', icon: StarIcon, unlockLevel: 30, description: 'Expert in pastries.' },
+      { name: 'Crust Conjurer', icon: CakeIcon, unlockLevel: 36, description: 'Flawless crusts every time.' },
+      { name: 'Bake Sense', icon: SparklesIcon, unlockLevel: 42, description: 'Sense when baking is perfect.' },
+      { name: 'Filling Fiend', icon: CakeIcon, unlockLevel: 48, description: 'Master of sweet and savory fillings.' },
+      { name: 'Bread Buffoon', icon: AcademicCapIcon, unlockLevel: 55, description: 'Master of all baked goods.' },
+      { name: 'Baking Warlock', icon: TrophyIcon, unlockLevel: 60, description: 'Legendary baking magic (Capstone).' },
     ],
   };
 
@@ -73,10 +90,10 @@ const Profile = () => {
     redirectToLogout('/.netlify/functions/auth-logout');
   };
 
-  const handleUnlock = (tree: string, talent: string, cost: number) => {
-    if (talentPoints >= cost && !activeTalents.includes(talent)) {
-      setTalentPoints(points => points - cost);
-      setActiveTalents(talents => [...talents, talent]);
+  // Handle permanent selection of a talent (cannot be undone)
+  const handleSelectTalent = (talentName: string) => {
+    if (!selectedTalents.includes(talentName)) {
+      setSelectedTalents(prev => [...prev, talentName]);
     }
   };
 
@@ -123,10 +140,6 @@ const Profile = () => {
         setTalentPoints(calculatedTalentPoints);
         console.log('Calculated talent points:', calculatedTalentPoints);
         
-        // Mock active talents for now (in real implementation, fetch from backend)
-        if (xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
-        if (xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
-        
         // Fetch subscription information
         try {
           const subscriptionData = await verifySubscription(user?.id || '');
@@ -149,9 +162,7 @@ const Profile = () => {
     if (userProfile) {
       const points = Math.floor(userProfile.xp / 100);
       setTalentPoints(points);
-      // Mock active talents for now (in real implementation, fetch from backend)
-      if (userProfile.xp >= 100) setActiveTalents(['Sear Savant', 'Flame Tamer', 'Dough Whisperer']);
-      if (userProfile.xp >= 300) setActiveTalents(prev => [...prev, 'Heat Control']);
+      // No more mock activeTalents logic
     }
   }, [userProfile]);
 
@@ -202,8 +213,8 @@ const Profile = () => {
           {/* Active Talents and Talent Trees - Compact and Centered Buttons */}
           <div className="mb-4">
             <div className="flex flex-wrap justify-center gap-1.5 mb-1.5">
-              {activeTalents.length > 0 &&
-                activeTalents.slice(0, 3).map(talent => (
+              {selectedTalents.length > 0 &&
+                selectedTalents.slice(0, 3).map(talent => (
                   <span
                     key={talent}
                     className="px-2 py-0.5 rounded-full border font-bold text-xs bg-maineBlue text-seafoam border-maineBlue"
@@ -211,8 +222,8 @@ const Profile = () => {
                     {talent}
                   </span>
                 ))}
-              {activeTalents.length > 3 && (
-                <span className="px-2 py-0.5 rounded-full border font-bold text-xs text-gray-500">+{activeTalents.length - 3} more</span>
+              {selectedTalents.length > 3 && (
+                <span className="px-2 py-0.5 rounded-full border font-bold text-xs text-gray-500">+{selectedTalents.length - 3} more</span>
               )}
             </div>
             <div className="flex justify-center gap-2">
@@ -254,106 +265,67 @@ const Profile = () => {
                 ))}
               </div>
               {Object.entries(talentTrees).map(([tree, talents]) => (
-                <div
-                  key={tree}
-                  className={`bg-gray-100 p-3 rounded-lg border border-gray-200 ${
-                    activeTab === tree ? 'block' : 'hidden'
-                  }`}
-                >
-                  <h3 className="text-lg font-bold mb-2 text-maineBlue">{tree}</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {talents.map(talent => {
-  const locked = (userProfile?.xp || 0) < talent.unlockLevel;
-  const Icon = talent.icon;
-  return (
-    <div
-      key={talent.name}
-      className={`relative group p-2 rounded border text-xs cursor-pointer transition-colors flex flex-col items-center justify-center ${
-        talent.active
-          ? 'bg-maineBlue text-seafoam border-maineBlue'
-          : !locked && talent.cost <= talentPoints
-          ? 'bg-seafoam text-maineBlue border-seafoam hover:bg-maineBlue hover:text-seafoam'
-          : 'bg-gray-200 text-gray-500 border-gray-200 opacity-60'
-      }`}
-      onClick={() => {
-        if (!locked) handleUnlock(tree, talent.name, talent.cost);
-      }}
-    >
-      <Icon className={`w-8 h-8 mb-1 ${locked ? 'opacity-40 grayscale' : ''} ${talent.active ? 'drop-shadow-lg' : ''}`} />
-      <div className="font-bold mb-0.5 text-center">{talent.name}</div>
-      {/* Tooltip on hover */}
-      <div className="absolute left-1/2 -translate-x-1/2 mt-2 z-10 hidden group-hover:block bg-white text-black p-2 rounded shadow-lg text-xs w-44 border border-gray-300">
-        <strong>{talent.name}</strong>
-        <div className="mt-1">{talent.description}</div>
-        <div className="mt-1 text-xs text-gray-500">Unlocks at level {talent.unlockLevel}</div>
-      </div>
-    </div>
-  );
-})}
+                activeTab === tree && (
+                  <div
+                    key={tree}
+                    className="bg-gray-100 p-3 rounded-lg border border-gray-200"
+                  >
+                    <h3 className="text-lg font-bold mb-2 text-maineBlue">{tree}</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {talents.map(talent => {
+                        // Calculate if talent is unlocked by level
+                        const xp = userProfile?.xp || 0;
+                        const level = Math.floor(xp / 100) + 1;
+                        const unlocked = level >= talent.unlockLevel;
+                        const selected = selectedTalents.includes(talent.name);
+                        const Icon = talent.icon;
+                        return (
+                          <div
+                            key={talent.name}
+                            className={`relative group p-2 rounded border text-xs flex flex-col items-center justify-center transition-colors min-h-[96px] w-full ${
+                              selected
+                                ? 'bg-green-600 text-white border-green-700' // selected
+                                : unlocked
+                                  ? 'bg-maineBlue text-seafoam border-maineBlue' // unlocked, not selected
+                                  : 'bg-gray-200 text-gray-500 border-gray-200 opacity-60' // locked
+                            }`}
+                          >
+                            <Icon className={`w-8 h-8 mb-1 ${!unlocked ? 'opacity-40 grayscale' : ''} ${selected ? 'drop-shadow-lg' : ''}`} />
+                            <div className="font-bold mb-0.5 text-center">{talent.name}</div>
+                            {/* Tooltip on hover */}
+                            <div className="absolute left-1/2 -translate-x-1/2 mt-2 z-10 hidden group-hover:block bg-white text-black p-2 rounded shadow-lg text-xs w-44 border border-gray-300">
+                              <strong>{talent.name}</strong>
+                              <div className="mt-1">{talent.description}</div>
+                              <div className="mt-1 text-xs text-gray-500">Unlocks at level {talent.unlockLevel}</div>
+                            </div>
+                            {/* Select button if unlocked and not selected */}
+                            {!selected && unlocked && (
+                              <button
+                                className="mt-1 px-2 py-0.5 rounded bg-seafoam text-maineBlue border border-maineBlue font-bold text-xs hover:bg-maineBlue hover:text-seafoam transition-colors"
+                                onClick={() => handleSelectTalent(talent.name)}
+                                disabled={selected}
+                              >
+                                Select
+                              </button>
+                            )}
+                            {/* Show 'Selected' if selected */}
+                            {selected && (
+                              <span className="mt-1 px-2 py-0.5 rounded bg-green-700 text-white text-xs font-bold">Selected</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-8 flex flex-col gap-2 items-center">
-            <button
-              className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
-              onClick={() => setModalOpen(true)}
-            >
-              Edit Profile
-            </button>
-            <button
-              className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
-              onClick={() => setShowUpgradeModal(true)}
-            >
-              Manage Subscription
-            </button>
-            <button
-              className="bg-lobsterRed text-weatheredWhite px-6 py-2 w-60 rounded font-bold hover:bg-red-700 transition-colors text-sm shadow"
-              onClick={async () => handleLogout()}
-            >
-              Sign Out
-            </button>
-            <button className="text-xs text-gray-500 hover:underline mt-1" onClick={() => setTermsModalOpen(true)}>
-              Terms of Service
-            </button>
+              )
+            ))}
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Edit Profile Modal */}
-      {modalOpen && (
-        <EditProfileModal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          user={userProfile}
-          onProfileUpdated={(updatedUserProfile) => {
-            setUserProfile(updatedUserProfile);
-            setModalOpen(false);
-          }}
-        />
-      )}
-
-      {/* Terms Modal */}
-      {termsModalOpen && (
-        <TermsModal
-          open={termsModalOpen}
-          onClose={() => setTermsModalOpen(false)}
-          content={termsContent}
-        />
-      )}
-
-      {/* Subscription Modal */}
-      {showUpgradeModal && (
-        <PaymentModal
-          open={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-        />
-      )}
     </div>
   );
-};
+}
 
 function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
   open: boolean;
