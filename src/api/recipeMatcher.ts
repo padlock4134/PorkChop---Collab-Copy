@@ -14,6 +14,13 @@ const KITCHEN_EQUIPMENT = {
   'Full Chef\'s Kitchen': ['all equipment']
 } as const;
 
+// Define equipment associated with each talent tree
+const TALENT_TREE_EQUIPMENT = {
+  'Cast Iron Champion': ['cast iron', 'dutch oven', 'skillet'],
+  'Grilling Heavy Weight': ['grill', 'smoker', 'charcoal', 'gas grill'],
+  'Baking Warlock': ['stand mixer', 'baking sheet', 'pastry brush', 'rolling pin']
+} as const;
+
 type KitchenSetup = keyof typeof KITCHEN_EQUIPMENT;
 
 const ANTHROPIC_API_URL = '/.netlify/functions/anthropic-proxy';
@@ -87,11 +94,13 @@ function fuzzyMatch(ingredient1: string, ingredient2: string): boolean {
          norm2.split(' ').some(word => norm1.includes(word));
 }
 
-// Score a recipe based on user's cupboard, preferences, and kitchen setup
+// Score a recipe based on user's cupboard, preferences, kitchen setup, and talent tree
 function scoreRecipe(
   recipe: RecipeCard, 
   cupboard: string[],
-  kitchenSetup?: string
+  kitchenSetup?: string,
+  talentTree?: string | null,
+  talentsEnabled: boolean = false
 ): number {
   let score = 0;
   
@@ -108,8 +117,8 @@ function scoreRecipe(
     const requiredEquipment = recipe.equipment || [];
     
     const missingEquipment = requiredEquipment.filter(eq => {
-      if (availableEquipment.includes('all equipment')) return false;
-      return !availableEquipment.some(available => 
+      if (availableEquipment[0] === 'all equipment') return false;
+      return !availableEquipment.some((available: string) => 
         eq.toLowerCase().includes(available.toLowerCase())
       );
     });
@@ -118,14 +127,39 @@ function scoreRecipe(
     score -= missingEquipment.length * 1.5;
   }
   
+  // 3. Bonus for matching talent tree equipment (if talents are enabled and a tree is selected)
+  if (talentsEnabled && talentTree && talentTree in TALENT_TREE_EQUIPMENT) {
+    const preferredEquipment = TALENT_TREE_EQUIPMENT[talentTree as keyof typeof TALENT_TREE_EQUIPMENT];
+    const hasPreferredEquipment = (recipe.equipment || []).some(eq => 
+      preferredEquipment.some(pref => eq.toLowerCase().includes(pref))
+    );
+    
+    if (hasPreferredEquipment) {
+      // Add a significant bonus for matching talent tree equipment
+      score += 5;
+    }
+  }
+  
   return score;
 }
 
-export async function fetchRecipesWithImages(
-  userId: string, 
-  ingredients: string[], 
-  numRecipes = 5
-): Promise<RecipeCard[]> {
+export interface RecipeMatchOptions {
+  userId: string;
+  ingredients: string[];
+  numRecipes?: number;
+  kitchenSetup?: string;
+  talentsEnabled?: boolean;
+  talentTree?: string | null;
+}
+
+export async function fetchRecipesWithImages({
+  userId,
+  ingredients,
+  numRecipes = 5,
+  kitchenSetup: userKitchenSetup,
+  talentsEnabled = false,
+  talentTree = null
+}: RecipeMatchOptions): Promise<RecipeCard[]> {
   // 1. Get user preferences and profile
   const [{ experienceLevel }, profile] = await Promise.all([
     getUserPreferences(userId),
@@ -144,15 +178,16 @@ export async function fetchRecipesWithImages(
   
   const prompt = `${basePrompt}
 
-${dietaryPrefs.length ? `IMPORTANT: All recipes MUST follow these dietary restrictions: ${dietaryPrefs.join(', ')}` : ''}
-${cuisinePrefs.length ? `PREFERRED CUISINES: Try to incorporate these cuisine styles when possible: ${cuisinePrefs.join(', ')}` : ''}
+${dietaryPrefs.length > 0 ? `Dietary preferences: ${dietaryPrefs.join(', ')}` : ''}
+${cuisinePrefs.length > 0 ? `Cuisine preferences: ${cuisinePrefs.join(', ')}` : ''}
+${userKitchenSetup ? `Kitchen setup: ${userKitchenSetup}` : ''}
 
-Format your response as a JSON array of recipe objects. Each recipe object MUST have these exact fields:
+Return the recipes as a JSON array with the following structure for each recipe:
 {
   "title": "Recipe Name",
-  "ingredients": ["ingredient 1", "ingredient 2", ...],
-  "instructions": ["step 1", "step 2", ...],
-  "equipment": ["equipment 1", "equipment 2", ...]
+  "ingredients": ["ingredient 1", "ingredient 2"],
+  "instructions": ["Step 1", "Step 2"],
+  "equipment": ["equipment 1", "equipment 2"]
 }
 
 For equipment, list all necessary kitchen tools and appliances needed to prepare the recipe (e.g., "frying pan", "mixing bowl", "oven", "blender").
@@ -199,7 +234,7 @@ Return ONLY the JSON array, no other text.`;
     return generateFallbackRecipes(userId, ingredients, numRecipes);
   }
 
-  // 4. Score and sort recipes based on user's cupboard and kitchen setup
+  // 4. Score and sort recipes based on user's cupboard, kitchen setup, and talent tree
   const scoredRecipes = recipes
     .map(recipe => ({
       ...recipe,
@@ -210,7 +245,9 @@ Return ONLY the JSON array, no other text.`;
           equipment: Array.isArray(recipe.equipment) ? recipe.equipment : []
         },
         ingredients,
-        kitchenSetup
+        kitchenSetup,
+        talentTree,
+        talentsEnabled
       )
     }))
     .sort((a, b) => b.score - a.score)
