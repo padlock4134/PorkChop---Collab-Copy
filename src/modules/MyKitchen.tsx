@@ -240,7 +240,15 @@ const MyKitchen = () => {
             try {
               const cupboardNames = ingredients.map(i => i.name);
               const { fetchRecipesWithImages } = await import('../api/recipeMatcher');
-              const recipes = await fetchRecipesWithImages(user?.id!, cupboardNames, 5);
+              const recipes = await fetchRecipesWithImages({
+                userId: user?.id!,
+                ingredients: cupboardNames,
+                numRecipes: 5,
+                // These will be undefined by default, which is fine - the function has defaults
+                kitchenSetup: undefined,
+                talentsEnabled: false,
+                talentTree: null
+              });
               setMatcherRecipes(recipes);
             } catch (err: any) {
               setMatcherError('Failed to fetch recipes.');
