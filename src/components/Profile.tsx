@@ -226,12 +226,16 @@ const Profile = () => {
           )}
         </div>
         <div className="flex justify-center gap-2">
-          <button
-            className="bg-seafoam text-maineBlue px-3 py-1 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm"
-            onClick={() => setShowTalents(!showTalents)}
-          >
-            {showTalents ? 'Hide Talents' : 'View Talents'}
-          </button>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+  <span className="font-semibold text-xs">Show Talents</span>
+  <input
+    type="checkbox"
+    checked={showTalents}
+    onChange={() => setShowTalents(val => !val)}
+    className="toggle-checkbox h-5 w-10 rounded-full border-2 border-maineBlue focus:ring-maineBlue focus:outline-none transition"
+    style={{ accentColor: '#63ace5' }}
+  />
+</label>
           <button
             className="bg-seafoam text-maineBlue px-3 py-1 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm"
             onClick={() => setModalOpen(true)}
