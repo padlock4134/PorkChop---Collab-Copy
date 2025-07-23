@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FireIcon, ShieldCheckIcon, StarIcon, TrophyIcon, SparklesIcon, CakeIcon, AcademicCapIcon } from '@heroicons/react/24/solid';
 import { redirectToLogout } from '@wristband/react-client-auth';
 
 import { supabase } from '../api/supabaseClient';
@@ -49,22 +50,22 @@ const Profile = () => {
 
   const talentTrees = {
     'Cast Iron Champion': [
-      { name: 'Sear Savant', cost: 1, active: activeTalents.includes('Sear Savant'), description: 'Perfect searing technique' },
-      { name: 'Heat Control', cost: 2, active: activeTalents.includes('Heat Control'), description: 'Mastery of heat distribution' },
-      { name: 'Seasoned Surface', cost: 3, active: activeTalents.includes('Seasoned Surface'), description: 'Optimal non-stick surface' },
-      { name: 'Iron Chef', cost: 5, active: activeTalents.includes('Iron Chef'), description: 'Ultimate cast iron mastery' },
+      { name: 'Sear Savant', icon: FireIcon, unlockLevel: 10, cost: 1, active: activeTalents.includes('Sear Savant'), description: 'Perfect searing technique' },
+      { name: 'Heat Control', icon: ShieldCheckIcon, unlockLevel: 14, cost: 2, active: activeTalents.includes('Heat Control'), description: 'Mastery of heat distribution' },
+      { name: 'Seasoned Surface', icon: StarIcon, unlockLevel: 18, cost: 3, active: activeTalents.includes('Seasoned Surface'), description: 'Optimal non-stick surface' },
+      { name: 'Iron Chef', icon: TrophyIcon, unlockLevel: 60, cost: 5, active: activeTalents.includes('Iron Chef'), description: 'Ultimate cast iron mastery (Capstone)' },
     ],
     'Grilling Heavy Weight': [
-      { name: 'Flame Tamer', cost: 1, active: activeTalents.includes('Flame Tamer'), description: 'Control over open flames' },
-      { name: 'Smoke Master', cost: 2, active: activeTalents.includes('Smoke Master'), description: 'Perfect smoky flavors' },
-      { name: 'Grill Marks', cost: 3, active: activeTalents.includes('Grill Marks'), description: 'Signature grill patterns' },
-      { name: 'BBQ God', cost: 5, active: activeTalents.includes('BBQ God'), description: 'Legendary grilling skills' },
+      { name: 'Flame Tamer', icon: FireIcon, unlockLevel: 10, cost: 1, active: activeTalents.includes('Flame Tamer'), description: 'Control over open flames' },
+      { name: 'Smoke Master', icon: SparklesIcon, unlockLevel: 14, cost: 2, active: activeTalents.includes('Smoke Master'), description: 'Perfect smoky flavors' },
+      { name: 'Grill Marks', icon: StarIcon, unlockLevel: 18, cost: 3, active: activeTalents.includes('Grill Marks'), description: 'Signature grill patterns' },
+      { name: 'BBQ God', icon: TrophyIcon, unlockLevel: 60, cost: 5, active: activeTalents.includes('BBQ God'), description: 'Legendary grilling skills (Capstone)' },
     ],
     'Baking Warlock': [
-      { name: 'Dough Whisperer', cost: 1, active: activeTalents.includes('Dough Whisperer'), description: 'Perfect dough consistency' },
-      { name: 'Oven Oracle', cost: 2, active: activeTalents.includes('Oven Oracle'), description: 'Precise baking timing' },
-      { name: 'Pastry Pro', cost: 3, active: activeTalents.includes('Pastry Pro'), description: 'Expert in pastries' },
-      { name: 'Bread Buffoon', cost: 5, active: activeTalents.includes('Bread Buffoon'), description: 'Master of all baked goods' },
+      { name: 'Dough Whisperer', icon: CakeIcon, unlockLevel: 10, cost: 1, active: activeTalents.includes('Dough Whisperer'), description: 'Perfect dough consistency' },
+      { name: 'Oven Oracle', icon: ShieldCheckIcon, unlockLevel: 14, cost: 2, active: activeTalents.includes('Oven Oracle'), description: 'Precise baking timing' },
+      { name: 'Pastry Pro', icon: StarIcon, unlockLevel: 18, cost: 3, active: activeTalents.includes('Pastry Pro'), description: 'Expert in pastries' },
+      { name: 'Bread Buffoon', icon: AcademicCapIcon, unlockLevel: 60, cost: 5, active: activeTalents.includes('Bread Buffoon'), description: 'Master of all baked goods (Capstone)' },
     ],
   };
 
@@ -261,23 +262,34 @@ const Profile = () => {
                 >
                   <h3 className="text-lg font-bold mb-2 text-maineBlue">{tree}</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    {talents.map(talent => (
-                      <div
-                        key={talent.name}
-                        className={`p-2 rounded border text-xs cursor-pointer transition-colors ${
-                          talent.active
-                            ? 'bg-maineBlue text-seafoam border-maineBlue'
-                            : talent.cost <= talentPoints
-                            ? 'bg-seafoam text-maineBlue border-seafoam hover:bg-maineBlue hover:text-seafoam'
-                            : 'bg-gray-200 text-gray-500 border-gray-200'
-                        }`}
-                        onClick={() => handleUnlock(tree, talent.name, talent.cost)}
-                      >
-                        <div className="font-bold mb-0.5">{talent.name}</div>
-                        <div className="text-[11px] opacity-90">{talent.description}</div>
-                        <div className="text-[11px]">Cost: {talent.cost} 🧑‍🍳</div>
-                      </div>
-                    ))}
+                    {talents.map(talent => {
+  const locked = (userProfile?.xp || 0) < talent.unlockLevel;
+  const Icon = talent.icon;
+  return (
+    <div
+      key={talent.name}
+      className={`relative group p-2 rounded border text-xs cursor-pointer transition-colors flex flex-col items-center justify-center ${
+        talent.active
+          ? 'bg-maineBlue text-seafoam border-maineBlue'
+          : !locked && talent.cost <= talentPoints
+          ? 'bg-seafoam text-maineBlue border-seafoam hover:bg-maineBlue hover:text-seafoam'
+          : 'bg-gray-200 text-gray-500 border-gray-200 opacity-60'
+      }`}
+      onClick={() => {
+        if (!locked) handleUnlock(tree, talent.name, talent.cost);
+      }}
+    >
+      <Icon className={`w-8 h-8 mb-1 ${locked ? 'opacity-40 grayscale' : ''} ${talent.active ? 'drop-shadow-lg' : ''}`} />
+      <div className="font-bold mb-0.5 text-center">{talent.name}</div>
+      {/* Tooltip on hover */}
+      <div className="absolute left-1/2 -translate-x-1/2 mt-2 z-10 hidden group-hover:block bg-white text-black p-2 rounded shadow-lg text-xs w-44 border border-gray-300">
+        <strong>{talent.name}</strong>
+        <div className="mt-1">{talent.description}</div>
+        <div className="mt-1 text-xs text-gray-500">Unlocks at level {talent.unlockLevel}</div>
+      </div>
+    </div>
+  );
+})}
                   </div>
                 </div>
               ))}
