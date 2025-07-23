@@ -174,13 +174,8 @@ const Profile = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded-lg shadow-lg">
-      {/* Header */}
-      <div className="flex justify-center items-center mb-6 flex-wrap gap-4 sm:gap-0">
-        <h1 className="text-3xl font-retro text-maineBlue">My Profile</h1>
-      </div>
-
-      {/* User Details - Condensed and Centered */}
-      <div className="mb-6 flex flex-col items-center gap-4 text-center">
+      {/* Header: Avatar on left, My Profile and username on right */}
+      <div className="flex items-center mb-6 gap-6">
         <div className="w-24 h-24 bg-maineBlue rounded-full flex items-center justify-center text-seafoam font-bold text-2xl overflow-hidden shrink-0">
           {userProfile.avatar ? (
             <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -188,13 +183,14 @@ const Profile = () => {
             <span>{userProfile.name.slice(0, 2).toUpperCase()}</span>
           )}
         </div>
-        <div>
-          <div className="flex items-center justify-center gap-2">
+        <div className="flex flex-col justify-center">
+          <h1 className="text-3xl font-retro text-maineBlue mb-1">My Profile</h1>
+          <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-maineBlue">{userProfile.name}</h2>
             {subscription && (
               <span className={`px-2 py-0.5 text-xs rounded-full ${
-                subscription.plan === 'yearly' 
-                  ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                subscription.plan === 'yearly'
+                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
                   : 'bg-blue-100 text-blue-800 border border-blue-300'
               }`}>
                 {subscription.plan === 'yearly' ? 'Yearly' : 'Monthly'}
