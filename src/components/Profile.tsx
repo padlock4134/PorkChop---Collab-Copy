@@ -129,16 +129,24 @@ const Profile = () => {
         const xp = typeof profile.xp === 'number' ? profile.xp : 0;
         console.log('Profile XP:', profile.xp, 'Parsed XP:', xp);
         
+        // Map the database fields to the component's state
         setUserProfile({
           ...profile,
           name: profile.name || 'User',
-          xp
+          xp,
+          // Map kitchen_setup from database to kitchenSetup in state
+          kitchenSetup: profile.kitchen_setup || 'Apartment Kitchen',
+          // Ensure these arrays are never undefined
+          dietary: profile.dietary || [],
+          cuisine: profile.cuisine || []
         });
+
+        // Also update the local kitchenSetup state
+        setKitchenSetup(profile.kitchen_setup || 'Apartment Kitchen');
 
         // Calculate talent points based on XP
         const calculatedTalentPoints = Math.floor(xp / 100);
         setTalentPoints(calculatedTalentPoints);
-        console.log('Calculated talent points:', calculatedTalentPoints);
         
         // Fetch subscription information
         try {
@@ -156,7 +164,7 @@ const Profile = () => {
       }
     };
     fetchUserAndProfile();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (userProfile) {
@@ -415,27 +423,36 @@ function EditProfileModal({
         experience,
         dietary,
         cuisine,
-        kitchen_setup: kitchenSetup
+        kitchen_setup: kitchenSetup // Make sure this matches the database column name
       };
 
-      const { data, error } = await supabase
+      // First update the profile
+      const { error: updateError } = await supabase
         .from('profiles')
         .update(updatedProfile)
-        .eq('id', user.id)
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Then fetch the updated profile to ensure we have the latest data
+      const { data: updatedUser, error: fetchError } = await supabase
+        .from('profiles')
         .select('*')
+        .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      if (data) {
+      if (updatedUser) {
+        // Update the local state with the fresh data from the database
         onProfileUpdated({
           ...user,
-          name: data.name,
-          email: data.email,
-          experience: data.experience,
-          dietary: data.dietary,
-          cuisine: data.cuisine,
-          kitchenSetup: data.kitchen_setup
+          name: updatedUser.name,
+          email: updatedUser.email,
+          experience: updatedUser.experience,
+          dietary: updatedUser.dietary || [],
+          cuisine: updatedUser.cuisine || [],
+          kitchenSetup: updatedUser.kitchen_setup || 'Apartment Kitchen'
         });
         onClose();
       }
