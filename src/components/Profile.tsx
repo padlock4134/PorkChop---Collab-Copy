@@ -303,18 +303,24 @@ const Profile = () => {
 
       <div className="mt-8 flex flex-col gap-2 items-center">
         <button
-          className="bg-seafoam text-maineBlue px-3 py-1 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm"
+          className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
+          onClick={() => setModalOpen(true)}
+        >
+          Edit Profile
+        </button>
+        <button
+          className="bg-seafoam text-maineBlue px-6 py-2 w-60 rounded font-bold hover:bg-maineBlue hover:text-seafoam transition-colors text-sm shadow"
           onClick={() => setShowUpgradeModal(true)}
         >
           Manage Subscription
         </button>
         <button
-          className="bg-lobsterRed text-weatheredWhite px-3 py-1 rounded font-bold hover:bg-red-700 transition-colors text-sm"
+          className="bg-lobsterRed text-weatheredWhite px-6 py-2 w-60 rounded font-bold hover:bg-red-700 transition-colors text-sm shadow"
           onClick={async () => handleLogout()}
         >
           Sign Out
         </button>
-        <button className="text-xs text-gray-500 hover:underline" onClick={() => setTermsModalOpen(true)}>
+        <button className="text-xs text-gray-500 hover:underline mt-1" onClick={() => setTermsModalOpen(true)}>
           Terms of Service
         </button>
       </div>
