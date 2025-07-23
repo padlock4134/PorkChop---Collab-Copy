@@ -186,9 +186,20 @@ const Profile = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded-lg shadow-lg">
-      {/* Header: My Profile | User Name */}
+      {/* Header: User Name with Avatar */}
       <div className="flex flex-col items-center mb-6">
-        <h1 className="text-3xl font-retro text-maineBlue mb-1">My Profile <span className="text-xl font-normal text-gray-500">|</span> <span className="text-xl font-bold text-maineBlue">{userProfile.name}</span></h1>
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-16 h-16 bg-maineBlue rounded-full flex items-center justify-center text-seafoam font-bold text-xl overflow-hidden shrink-0">
+            {userProfile.avatar ? (
+              <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span>{userProfile.name.slice(0, 2).toUpperCase()}</span>
+            )}
+          </div>
+          <h1 className="text-3xl font-retro text-maineBlue">
+            {userProfile.name}
+          </h1>
+        </div>
         {subscription && (
           <span className={`px-2 py-0.5 text-xs rounded-full mt-2 ${
             subscription.plan === 'yearly'
@@ -199,15 +210,31 @@ const Profile = () => {
           </span>
         )}
       </div>
-      {/* Avatar and Details Row */}
-      <div className="flex items-start gap-8 mb-6">
-        <div className="w-24 h-24 bg-maineBlue rounded-full flex items-center justify-center text-seafoam font-bold text-2xl overflow-hidden shrink-0 mt-2">
-          {userProfile.avatar ? (
-            <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <span>{userProfile.name.slice(0, 2).toUpperCase()}</span>
-          )}
-        </div>
+      
+      {/* Action Buttons */}
+      <div className="flex justify-center gap-4 mb-6">
+        <button
+          onClick={() => setModalOpen(true)}
+          className="inline-block bg-sand text-gray-800 px-6 py-2 rounded-full shadow hover:bg-seafoam hover:text-maineBlue font-bold transition-colors"
+        >
+          Edit Profile
+        </button>
+        <button
+          onClick={() => setShowUpgradeModal(true)}
+          className="inline-block bg-sand text-gray-800 px-6 py-2 rounded-full shadow hover:bg-seafoam hover:text-maineBlue font-bold transition-colors"
+        >
+          Manage Subscription
+        </button>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md font-medium hover:bg-gray-200 transition-colors"
+        >
+          Sign Out
+        </button>
+      </div>
+      
+      {/* Details Row */}
+      <div className="flex items-start mb-6">
         <div className="flex-1">
           <h2 className="text-lg font-retro mb-2 text-center">My Culinary Journey</h2>
           {/* Active Talents and Talent Trees - Compact and Centered Buttons */}
@@ -265,11 +292,8 @@ const Profile = () => {
                 ))}
               </div>
               {Object.entries(talentTrees).map(([tree, talents]) => (
-                activeTab === tree && (
-                  <div
-                    key={tree}
-                    className="bg-gray-100 p-3 rounded-lg border border-gray-200"
-                  >
+                <div key={tree} className={activeTab === tree ? 'block' : 'hidden'}>
+                  <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
                     <h3 className="text-lg font-bold mb-2 text-maineBlue">{tree}</h3>
                     <div className="grid grid-cols-2 gap-2">
                       {talents.map(talent => {
@@ -318,16 +342,45 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
-              )
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* Modals */}
+      <EditProfileModal 
+        open={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        user={userProfile}
+        onProfileUpdated={(updatedUser) => {
+          setUserProfile(updatedUser);
+          setModalOpen(false);
+        }}
+      />
+      
+      <PaymentModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        userId={user?.id || ''}
+      />
+      
+      <TermsModal
+        open={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        content={termsContent}
+      />
     </div>
   );
-}
+};
 
-function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
+// EditProfileModal component moved outside of Profile component
+function EditProfileModal({ 
+  open, 
+  onClose, 
+  user,
+  onProfileUpdated 
+}: {
   open: boolean;
   onClose: () => void;
   user: UserProfile;
@@ -510,12 +563,15 @@ function EditProfileModal({ open, onClose, user, onProfileUpdated }: {
   );
 }
 
-function Modal({ open, onClose, children, className }: {
+// Modal component
+type ModalProps = {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
-}) {
+};
+
+function Modal({ open, onClose, children, className }: ModalProps) {
   if (!open) return null;
 
   return (
@@ -524,6 +580,7 @@ function Modal({ open, onClose, children, className }: {
         <button
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
           onClick={onClose}
+          aria-label="Close modal"
         >
           ✕
         </button>
@@ -533,13 +590,20 @@ function Modal({ open, onClose, children, className }: {
   );
 }
 
-function TermsModal({ open, onClose, content }: {
+// TermsModal component
+type TermsModalProps = {
   open: boolean;
   onClose: () => void;
   content: string;
-}) {
+};
+
+function TermsModal({ open, onClose, content }: TermsModalProps) {
   return (
-    <Modal open={open} onClose={onClose} className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded shadow-lg max-h-[80vh] overflow-auto">
+    <Modal 
+      open={open} 
+      onClose={onClose} 
+      className="max-w-2xl mx-auto p-6 bg-weatheredWhite rounded shadow-lg max-h-[80vh] overflow-auto"
+    >
       <h2 className="text-2xl font-retro mb-4 text-maineBlue">Terms of Service</h2>
       <div className="mb-4 text-gray-700 whitespace-pre-line">
         {content}
